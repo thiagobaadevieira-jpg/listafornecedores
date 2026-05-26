@@ -1,3 +1,15 @@
+export interface Supplier {
+  id: string;
+  code: number;
+  name: string;
+  category: string;
+  instagram?: string;
+  photoUrl?: string;
+  note?: string;
+  isFavorite?: boolean;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -5,22 +17,20 @@ export interface User {
   color: string;
   initials: string;
   photoUrl?: string;
+  role: 'admin' | 'client';
 }
 
-export interface Expense {
+export interface Banner {
   id: string;
-  userId: string;
-  category: string;
-  name: string;
-  value: number;
-  note?: string;
-  attachmentUrl?: string;
-  createdAt: string;
+  photoUrl: string;
+  link?: string;
 }
 
-export interface UserStats {
-  userId: string;
-  userName: string;
-  total: number;
-  color: string;
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  active: boolean;
+  createdAt: string;
 }

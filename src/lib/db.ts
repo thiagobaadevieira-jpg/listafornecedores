@@ -1,244 +1,380 @@
 import { supabase } from './supabase';
-import type { User, Expense } from '../types';
+import type { Supplier, Banner, Client } from '../types';
 
-export type Category = { id?: string; name: string; color: string; initials: string };
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-// ─── Expenses ───────────────────────────────────────────────────────────────
+export type Category = { id: string; name: string; color: string; initials: string };
 
-function rowToExpense(row: Record<string, unknown>): Expense {
-  return {
-    id: row.id as string,
-    userId: row.user_id as string,
-    category: row.category as string,
-    name: row.name as string,
-    value: Number(row.value),
-    note: row.note ? (row.note as string) : undefined,
-    attachmentUrl: row.attachment_url ? (row.attachment_url as string) : undefined,
-    createdAt: row.created_at as string,
-  };
-}
+export type Profile = {
+  id: string;
+  name: string;
+  color: string;
+  initials: string;
+  photo_url?: string | null;
+  role: 'admin' | 'client';
+};
 
-export async function getExpenses(): Promise<Expense[]> {
+export type AppSettings = { notificationTitle: string; notificationMessage: string };
+
+// ─── Profile ──────────────────────────────────────────────────────────────────
+
+export async function getProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
-    .from('expenses')
+    .from('profiles')
     .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(rowToExpense);
-}
-
-export async function createExpense(
-  data: Omit<Expense, 'id' | 'createdAt'>
-): Promise<Expense> {
-  const { data: row, error } = await supabase
-    .from('expenses')
-    .insert({
-      user_id: data.userId,
-      category: data.category,
-      name: data.name,
-      value: data.value,
-      note: data.note ?? null,
-      attachment_url: data.attachmentUrl ?? null,
-    })
-    .select()
+    .eq('id', userId)
     .single();
-  if (error) throw error;
-  return rowToExpense(row);
+  if (error) return null;
+  return data as Profile;
 }
 
-export async function updateExpense(
-  id: string,
-  data: Partial<Omit<Expense, 'id' | 'userId' | 'createdAt'>>
+export async function upsertProfile(
+  userId: string,
+  updates: Partial<Omit<Profile, 'id' | 'role'>>
 ): Promise<void> {
   const { error } = await supabase
-    .from('expenses')
-    .update({
-      category: data.category,
-      name: data.name,
-      value: data.value,
-      note: data.note ?? null,
-      attachment_url: data.attachmentUrl ?? null,
-    })
-    .eq('id', id);
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId);
   if (error) throw error;
 }
 
-export async function deleteExpense(id: string): Promise<void> {
-  const { error } = await supabase.from('expenses').delete().eq('id', id);
+export async function uploadAvatar(file: File, userId: string): Promise<string> {
+  const ext = file.name.split('.').pop();
+  const path = `${userId}/avatar.${ext}`;
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true });
   if (error) throw error;
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  return `${data.publicUrl}?t=${Date.now()}`;
 }
 
-export async function updateExpensesCategoryName(
-  oldName: string,
-  newName: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('expenses')
-    .update({ category: newName })
-    .eq('category', oldName);
-  if (error) throw error;
-}
-
-// ─── Categories ─────────────────────────────────────────────────────────────
-
-function rowToCategory(row: Record<string, unknown>): Category {
-  return {
-    id: row.id as string,
-    name: row.name as string,
-    color: row.color as string,
-    initials: row.initials as string,
-  };
-}
+// ─── Categories ───────────────────────────────────────────────────────────────
 
 export async function getCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .order('created_at', { ascending: true });
+    .order('name');
   if (error) throw error;
-  return (data ?? []).map(rowToCategory);
+  return data as Category[];
 }
 
-export async function createCategory(
-  cat: Omit<Category, 'id'>,
-  userId: string
-): Promise<Category> {
+export async function createCategory(cat: Omit<Category, 'id'>): Promise<Category> {
   const { data, error } = await supabase
     .from('categories')
-    .insert({ name: cat.name, color: cat.color, initials: cat.initials, created_by: userId })
+    .insert(cat)
     .select()
     .single();
   if (error) throw error;
-  return rowToCategory(data);
+  return data as Category;
 }
 
-export async function updateCategory(
-  id: string,
-  updates: Partial<Omit<Category, 'id'>>
-): Promise<void> {
-  const { error } = await supabase.from('categories').update(updates).eq('id', id);
+export async function updateCategory(id: string, updates: Partial<Omit<Category, 'id'>>): Promise<void> {
+  const { error } = await supabase
+    .from('categories')
+    .update(updates)
+    .eq('id', id);
   if (error) throw error;
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  const { error } = await supabase.from('categories').delete().eq('id', id);
+  const { error } = await supabase
+    .from('categories')
+    .delete()
+    .eq('id', id);
   if (error) throw error;
 }
 
-// ─── User profiles ───────────────────────────────────────────────────────────
+// ─── Suppliers ────────────────────────────────────────────────────────────────
 
-export async function getUsers(): Promise<User[]> {
-  const { data, error } = await supabase.from('user_profiles').select('*');
-  if (error) throw error;
-  return (data ?? []).map(row => ({
-    id: row.id as string,
-    name: row.name as string,
-    email: '',
-    color: row.color as string,
-    initials: row.initials as string,
-    photoUrl: row.photo_url ? (row.photo_url as string) : undefined,
-  }));
-}
-
-export async function getUserProfile(userId: string): Promise<User | null> {
+export async function getSuppliers(): Promise<Supplier[]> {
   const { data, error } = await supabase
-    .from('user_profiles')
+    .from('suppliers')
     .select('*')
-    .eq('id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data as any[]).map(row => ({
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    category: row.category,
+    instagram: row.instagram,
+    photoUrl: row.photo_url,
+    note: row.note,
+    isFavorite: false,
+    createdAt: row.created_at,
+  })) as Supplier[];
+}
+
+export async function getSuppliersWithFavorites(userId: string): Promise<Supplier[]> {
+  const [suppliersRes, favsRes] = await Promise.all([
+    supabase.from('suppliers').select('*').order('created_at', { ascending: false }),
+    supabase.from('supplier_favorites').select('supplier_id').eq('user_id', userId),
+  ]);
+  if (suppliersRes.error) throw suppliersRes.error;
+  const favIds = new Set((favsRes.data ?? []).map((f: any) => f.supplier_id));
+  return (suppliersRes.data as any[]).map(row => ({
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    category: row.category,
+    instagram: row.instagram,
+    photoUrl: row.photo_url,
+    note: row.note,
+    isFavorite: favIds.has(row.id),
+    createdAt: row.created_at,
+  })) as Supplier[];
+}
+
+export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | 'isFavorite'>): Promise<Supplier> {
+  const { data: row, error } = await supabase
+    .from('suppliers')
+    .insert({
+      name: data.name,
+      category: data.category,
+      instagram: data.instagram ?? null,
+      photo_url: data.photoUrl ?? null,
+      note: data.note ?? null,
+    })
+    .select()
     .single();
-  if (error || !data) return null;
+  if (error) throw error;
   return {
-    id: data.id as string,
-    name: data.name as string,
-    email: '',
-    color: data.color as string,
-    initials: data.initials as string,
-    photoUrl: data.photo_url ? (data.photo_url as string) : undefined,
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    category: row.category,
+    instagram: row.instagram,
+    photoUrl: row.photo_url,
+    note: row.note,
+    isFavorite: false,
+    createdAt: row.created_at,
   };
 }
 
-export async function upsertUserProfile(
-  userId: string,
-  profile: { name?: string; color?: string; initials?: string; photoUrl?: string | null }
+export async function updateSupplier(
+  id: string,
+  data: Partial<Omit<Supplier, 'id' | 'createdAt' | 'isFavorite'>>
 ): Promise<void> {
-  const payload: Record<string, unknown> = {
-    id: userId,
-    updated_at: new Date().toISOString(),
-  };
-  if (profile.name !== undefined) payload.name = profile.name;
-  if (profile.color !== undefined) payload.color = profile.color;
-  if (profile.initials !== undefined) payload.initials = profile.initials;
-  if (profile.photoUrl !== undefined) payload.photo_url = profile.photoUrl;
-
-  const { error } = await supabase.from('user_profiles').upsert(payload);
+  const { error } = await supabase
+    .from('suppliers')
+    .update({
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.category !== undefined && { category: data.category }),
+      ...(data.instagram !== undefined && { instagram: data.instagram }),
+      ...(data.photoUrl !== undefined && { photo_url: data.photoUrl }),
+      ...(data.note !== undefined && { note: data.note }),
+    })
+    .eq('id', id);
   if (error) throw error;
 }
 
-export async function uploadAvatar(file: File, userId: string): Promise<string> {
-  const ext = file.name.split('.').pop() ?? 'jpg';
-  const path = `${userId}/${Date.now()}.${ext}`;
+export async function deleteSupplier(id: string): Promise<void> {
+  const { error } = await supabase.from('suppliers').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function uploadSupplierPhoto(file: File): Promise<string> {
+  const ext = file.name.split('.').pop();
+  const path = `${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('suppliers')
+    .upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from('suppliers').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+// ─── Favorites ────────────────────────────────────────────────────────────────
+
+export async function toggleFavoriteSupplier(supplierId: string, userId: string, isFavorite: boolean): Promise<void> {
+  if (isFavorite) {
+    const { error } = await supabase
+      .from('supplier_favorites')
+      .delete()
+      .eq('user_id', userId)
+      .eq('supplier_id', supplierId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('supplier_favorites')
+      .insert({ user_id: userId, supplier_id: supplierId });
+    if (error) throw error;
+  }
+}
+
+// ─── Banners ──────────────────────────────────────────────────────────────────
+
+export async function getBanners(): Promise<Banner[]> {
+  const { data, error } = await supabase
+    .from('banners')
+    .select('*')
+    .order('position');
+  if (error) throw error;
+  return (data as any[]).map(row => ({
+    id: row.id,
+    photoUrl: row.photo_url,
+    link: row.link,
+  })) as Banner[];
+}
+
+export async function createBanner(data: Omit<Banner, 'id'>): Promise<Banner> {
+  const { count } = await supabase.from('banners').select('*', { count: 'exact', head: true });
+  if ((count ?? 0) >= 3) throw new Error('Máximo de 3 banners');
+  const { data: row, error } = await supabase
+    .from('banners')
+    .insert({ photo_url: data.photoUrl, link: data.link ?? null, position: count ?? 0 })
+    .select()
+    .single();
+  if (error) throw error;
+  return { id: row.id, photoUrl: row.photo_url, link: row.link };
+}
+
+export async function updateBanner(id: string, data: Partial<Omit<Banner, 'id'>>): Promise<void> {
+  const { error } = await supabase
+    .from('banners')
+    .update({
+      ...(data.photoUrl !== undefined && { photo_url: data.photoUrl }),
+      ...(data.link !== undefined && { link: data.link }),
+    })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteBanner(id: string): Promise<void> {
+  const { error } = await supabase.from('banners').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function uploadBannerPhoto(file: File): Promise<string> {
+  const ext = file.name.split('.').pop();
+  const path = `${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('banners')
+    .upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from('banners').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+// ─── Clients ──────────────────────────────────────────────────────────────────
+
+export async function getClientByEmail(email: string): Promise<Client | null> {
+  const { data, error } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('email', email)
+    .single();
+  if (error) return null;
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone ?? '',
+    active: data.active,
+    createdAt: data.created_at,
+  };
+}
+
+export async function getClients(): Promise<Client[]> {
+  const { data, error } = await supabase
+    .from('clients')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data as any[]).map(row => ({
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone ?? '',
+    active: row.active,
+    createdAt: row.created_at,
+  })) as Client[];
+}
+
+export async function createClient(data: Omit<Client, 'id' | 'createdAt'>): Promise<Client> {
+  const { data: row, error } = await supabase
+    .from('clients')
+    .insert({ name: data.name, email: data.email, phone: data.phone || null, active: data.active })
+    .select()
+    .single();
+  if (error) throw error;
+  return { id: row.id, name: row.name, email: row.email, phone: row.phone ?? '', active: row.active, createdAt: row.created_at };
+}
+
+export async function updateClient(id: string, data: Partial<Omit<Client, 'id' | 'createdAt'>>): Promise<void> {
+  const { error } = await supabase.from('clients').update(data).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteClient(id: string): Promise<void> {
+  const { error } = await supabase.from('clients').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function toggleClientStatus(id: string): Promise<void> {
+  const { data } = await supabase.from('clients').select('active').eq('id', id).single();
+  const { error } = await supabase.from('clients').update({ active: !data?.active }).eq('id', id);
+  if (error) throw error;
+}
+
+// ─── Auth helpers ─────────────────────────────────────────────────────────────
+
+export async function getRoleByEmail(email: string): Promise<'admin' | 'client' | null> {
+  const { data } = await supabase.rpc('get_role_by_email', { p_email: email });
+  return data ?? null;
+}
+
+export async function clientLogin(email: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('client-login', {
+    body: { email },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  const { error: verifyError } = await supabase.auth.verifyOtp({
+    token_hash: data.token,
+    type: 'email',
+  });
+  if (verifyError) throw verifyError;
+}
+
+// ─── System Settings ──────────────────────────────────────────────────────────
+
+export async function getSystemLogoUrl(): Promise<string | null> {
+  const { data } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'logo_url')
+    .single();
+  return data?.value ?? null;
+}
+
+export async function setSystemLogoUrl(url: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('system_settings')
+    .upsert({ key: 'logo_url', value: url });
+  if (error) throw error;
+}
+
+export async function uploadSystemLogo(file: File): Promise<string> {
+  const ext = file.name.split('.').pop();
+  const path = `system/logo.${ext}`;
   const { error } = await supabase.storage
     .from('avatars')
-    .upload(path, file, { upsert: false, cacheControl: '3600' });
+    .upload(path, file, { upsert: true });
   if (error) throw error;
   const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-  return data.publicUrl;
+  return `${data.publicUrl}?t=${Date.now()}`;
 }
 
-// ─── App Settings (team-wide singleton) ─────────────────────────────────────
-
-const APP_SETTINGS_ID = '00000000-0000-0000-0000-000000000001';
-
-export type AppSettings = {
-  notificationTitle: string;
-  notificationMessage: string;
-};
-
+// ─── App Settings (compat stub) ───────────────────────────────────────────────
 export async function getAppSettings(): Promise<AppSettings> {
-  const { data, error } = await supabase
-    .from('app_settings')
-    .select('notification_title, notification_message')
-    .eq('id', APP_SETTINGS_ID)
-    .single();
-  if (error || !data) {
-    return {
-      notificationTitle: 'Controle de Gastos',
-      notificationMessage: 'Você lembrou de anotar os seus gastos hoje?',
-    };
-  }
-  return {
-    notificationTitle: data.notification_title as string,
-    notificationMessage: data.notification_message as string,
-  };
+  return { notificationTitle: '', notificationMessage: '' };
 }
-
-export async function updateAppSettings(
-  updates: Partial<AppSettings>,
-  userId: string
-): Promise<void> {
-  const payload: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-    updated_by: userId,
-  };
-  if (updates.notificationTitle !== undefined) payload.notification_title = updates.notificationTitle;
-  if (updates.notificationMessage !== undefined) payload.notification_message = updates.notificationMessage;
-
-  const { error } = await supabase
-    .from('app_settings')
-    .update(payload)
-    .eq('id', APP_SETTINGS_ID);
-  if (error) throw error;
-}
-
-// ─── Storage ─────────────────────────────────────────────────────────────────
-
-export async function uploadReceipt(file: File, userId: string): Promise<string> {
-  const ext = file.name.split('.').pop() ?? 'jpg';
-  const path = `${userId}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage
-    .from('receipts')
-    .upload(path, file, { upsert: false });
-  if (error) throw error;
-  const { data } = supabase.storage.from('receipts').getPublicUrl(path);
-  return data.publicUrl;
-}
+export async function updateAppSettings(_updates: Partial<AppSettings>, _userId: string): Promise<void> {}
+export async function getUsers() { return []; }
+export async function getUserProfile(userId: string) { return getProfile(userId); }
+export async function upsertUserProfile(userId: string, profile: any) { return upsertProfile(userId, profile); }
+export async function uploadReceipt(_file: File, _userId: string): Promise<string> { return ''; }
