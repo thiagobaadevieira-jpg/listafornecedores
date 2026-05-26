@@ -1382,6 +1382,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(20);
   const [scrolled, setScrolled] = useState(false);
+  const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
 
   // Reset visibleCount when filter/search/view changes
   useEffect(() => {
@@ -1716,12 +1717,37 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
 
                   const visible = filtered.slice(0, visibleCount);
 
+                  // Pré-carrega fotos invisíveis; card só aparece quando pronto
+                  visible.forEach(s => {
+                    if (!s.photoUrl || loadedPhotos.has(s.id)) return;
+                    const img = new Image();
+                    img.onload = () => setLoadedPhotos(prev => { const n = new Set(prev); n.add(s.id); return n; });
+                    img.onerror = () => setLoadedPhotos(prev => { const n = new Set(prev); n.add(s.id); return n; });
+                    img.src = s.photoUrl;
+                  });
+
+                  // Mostra em ordem: só avança para o próximo quando o anterior já apareceu
+                  let displayCount = 0;
+                  for (const s of visible) {
+                    if (!s.photoUrl || loadedPhotos.has(s.id)) displayCount++;
+                    else break;
+                  }
+                  const readySuppliers = visible.slice(0, displayCount);
+
                   return (<>
-                  {visible.map((supplier) => {
+                  {readySuppliers.map((supplier) => {
                     const GOLD = '#c9a55a';
                     return (
-                      <div key={supplier.id}
-                        onClick={() => { setEditingSupplier(supplier); setIsSupplierModalOpen(true); }}
+                      <motion.div key={supplier.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35, ease: 'easeOut' }}
+                        onClick={async () => {
+                          setIsSupplierModalOpen(true);
+                          // Busca detalhes completos (incluindo note) só ao abrir
+                          const detail = await db.getSupplierDetail(supplier.id);
+                          setEditingSupplier(detail ?? supplier);
+                        }}
                         className="interactive-glass rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 flex items-center justify-between group gap-4 cursor-pointer"
                       >
                         <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
@@ -1770,7 +1796,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                             </a>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                   </>);

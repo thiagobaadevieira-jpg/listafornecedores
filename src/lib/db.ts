@@ -89,10 +89,13 @@ export async function deleteCategory(id: string): Promise<void> {
 
 // ─── Suppliers ────────────────────────────────────────────────────────────────
 
+const SUPPLIER_LIST_COLS = 'id, code, name, category, instagram, photo_url, created_at';
+const SUPPLIER_DETAIL_COLS = 'id, code, name, category, instagram, photo_url, note, created_at';
+
 export async function getSuppliers(): Promise<Supplier[]> {
   const { data, error } = await supabase
     .from('suppliers')
-    .select('*')
+    .select(SUPPLIER_LIST_COLS)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data as any[]).map(row => ({
@@ -102,7 +105,6 @@ export async function getSuppliers(): Promise<Supplier[]> {
     category: row.category,
     instagram: row.instagram,
     photoUrl: row.photo_url,
-    note: row.note,
     isFavorite: false,
     createdAt: row.created_at,
   })) as Supplier[];
@@ -110,7 +112,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
 
 export async function getSuppliersWithFavorites(userId: string): Promise<Supplier[]> {
   const [suppliersRes, favsRes] = await Promise.all([
-    supabase.from('suppliers').select('*').order('created_at', { ascending: false }),
+    supabase.from('suppliers').select(SUPPLIER_LIST_COLS).order('created_at', { ascending: false }),
     supabase.from('supplier_favorites').select('supplier_id').eq('user_id', userId),
   ]);
   if (suppliersRes.error) throw suppliersRes.error;
@@ -122,10 +124,29 @@ export async function getSuppliersWithFavorites(userId: string): Promise<Supplie
     category: row.category,
     instagram: row.instagram,
     photoUrl: row.photo_url,
-    note: row.note,
     isFavorite: favIds.has(row.id),
     createdAt: row.created_at,
   })) as Supplier[];
+}
+
+export async function getSupplierDetail(id: string): Promise<Supplier | null> {
+  const { data, error } = await supabase
+    .from('suppliers')
+    .select(SUPPLIER_DETAIL_COLS)
+    .eq('id', id)
+    .single();
+  if (error) return null;
+  return {
+    id: data.id,
+    code: data.code,
+    name: data.name,
+    category: data.category,
+    instagram: data.instagram,
+    photoUrl: data.photo_url,
+    note: data.note,
+    isFavorite: false,
+    createdAt: data.created_at,
+  };
 }
 
 export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | 'isFavorite'>): Promise<Supplier> {
