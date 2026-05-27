@@ -1558,36 +1558,36 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
 
       <div className="max-w-2xl mx-auto px-6 pt-28 overflow-x-hidden">
         {/* View Switcher Refined */}
-        <div className="flex p-1.5 glass rounded-2xl mb-10 z-[70]">
-          <button 
+        <div className="flex p-1 sm:p-1.5 glass rounded-2xl mb-10 z-[70]">
+          <button
             onClick={() => setView('overview')}
             className={cn(
-              "flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all",
+              "flex-1 py-2.5 px-2 sm:px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all",
               view === 'overview' ? "bg-white/10 text-white shadow-xl" : "text-white/40 hover:text-white/60"
             )}
           >
-            <LayoutDashboard className="w-4 h-4" />
-            <span className="text-sm font-bold">Início</span>
+            <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="text-xs sm:text-sm font-bold">Início</span>
           </button>
           <button
             onClick={() => setView('list')}
             className={cn(
-              "flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all",
+              "flex-1 py-2.5 px-2 sm:px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all",
               view === 'list' ? "bg-white/10 text-white shadow-xl" : "text-white/40 hover:text-white/60"
             )}
           >
-            <List className="w-4 h-4" />
-            <span className="text-sm font-bold">Fornecedores</span>
+            <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="text-xs sm:text-sm font-bold">Fornecedores</span>
           </button>
           <button
             onClick={() => setView('favorites')}
             className={cn(
-              "flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all",
+              "flex-1 py-2.5 px-2 sm:px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all",
               view === 'favorites' ? "bg-white/10 text-white shadow-xl" : "text-white/40 hover:text-white/60"
             )}
           >
-            <Heart className="w-4 h-4" />
-            <span className="text-sm font-bold">Favoritos</span>
+            <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="text-xs sm:text-sm font-bold">Favoritos</span>
           </button>
         </div>
 
