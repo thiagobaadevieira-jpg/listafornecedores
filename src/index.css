@@ -51,8 +51,8 @@
   }
   
   .interactive-glass:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
   }
   
   .interactive-glass:active {
