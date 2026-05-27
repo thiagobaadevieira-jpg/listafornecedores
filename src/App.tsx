@@ -734,11 +734,19 @@ const LoginScreen = () => {
   const [systemLogoUrl, setSystemLogoUrl] = useState<string | null>(null);
   const [installVideoUrl, setInstallVideoUrl] = useState<string | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     db.getSystemLogoUrl().then(setSystemLogoUrl);
     db.getInstallVideoUrl().then(setInstallVideoUrl);
   }, []);
+
+  const handleVideoModalClose = () => {
+    setIsVideoModalOpen(false);
+    setVideoPlaying(false);
+    if (videoRef.current) videoRef.current.pause();
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -864,7 +872,7 @@ const LoginScreen = () => {
         <>
           <div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300]"
-            onClick={() => setIsVideoModalOpen(false)}
+            onClick={handleVideoModalClose}
           />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[301] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
             {/* Header */}
@@ -877,23 +885,46 @@ const LoginScreen = () => {
                 <p className="text-sm font-black text-white">Como instalar o app</p>
               </div>
               <button
-                onClick={() => setIsVideoModalOpen(false)}
+                onClick={handleVideoModalClose}
                 className="p-1.5 rounded-xl hover:bg-white/5 text-white/30 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Player de vídeo */}
-            <div className="bg-black">
+            {/* Player de vídeo com botão pulsante */}
+            <div className="bg-black relative">
               <video
+                ref={videoRef}
                 src={installVideoUrl}
                 className="w-full max-h-[60vh] object-contain"
                 controls
                 playsInline
                 controlsList="nodownload"
                 preload="metadata"
+                onPlay={() => setVideoPlaying(true)}
+                onPause={() => setVideoPlaying(false)}
+                onEnded={() => setVideoPlaying(false)}
               />
+
+              {/* Botão play pulsante — some quando o vídeo inicia */}
+              {!videoPlaying && (
+                <button
+                  onClick={() => { videoRef.current?.play(); }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  {/* Anel pulsante externo */}
+                  <span className="absolute w-20 h-20 rounded-full animate-ping opacity-30" style={{ background: '#c9a55a' }} />
+                  {/* Anel médio */}
+                  <span className="absolute w-16 h-16 rounded-full opacity-50" style={{ background: '#c9a55a' }} />
+                  {/* Botão play central */}
+                  <span className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl" style={{ background: '#c9a55a' }}>
+                    <svg className="w-6 h-6 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </>
