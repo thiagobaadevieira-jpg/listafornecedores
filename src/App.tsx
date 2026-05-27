@@ -901,7 +901,7 @@ const LoginScreen = () => {
                 controls
                 playsInline
                 controlsList="nodownload"
-                preload="metadata"
+                preload="none"
                 onPlay={() => setVideoPlaying(true)}
                 onPause={() => setVideoPlaying(false)}
                 onEnded={() => setVideoPlaying(false)}
