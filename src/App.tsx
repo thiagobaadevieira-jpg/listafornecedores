@@ -1817,7 +1817,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         href="https://wa.me/5547996077623"
         target="_blank"
         rel="noreferrer"
-        className="fixed bottom-8 left-8 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_24px_-4px_rgba(37,211,102,0.6)] z-[90] active:scale-95 transition-all"
+        className={cn("fixed right-8 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_24px_-4px_rgba(37,211,102,0.6)] z-[90] active:scale-95 transition-all", isAdmin ? "bottom-28" : "bottom-8")}
         style={{ background: '#25D366' }}
       >
         <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white">
