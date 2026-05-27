@@ -909,7 +909,8 @@ const LoginScreen = () => {
       {isVideoModalOpen && installVideoUrl && (
         <>
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300]"
+            className="fixed inset-0 backdrop-blur-sm z-[300]"
+            style={{ background: 'rgba(10, 13, 26, 0.92)' }}
             onClick={handleVideoModalClose}
           />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[301] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
