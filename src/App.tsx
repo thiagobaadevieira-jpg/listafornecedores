@@ -840,20 +840,23 @@ const LoginScreen = () => {
           </form>
         )}
 
-        {/* Botão "Como instalar o app" — só aparece se houver vídeo configurado */}
-        {installVideoUrl && (
-          <button
-            type="button"
-            onClick={() => setIsVideoModalOpen(true)}
-            className="mt-6 w-full flex items-center justify-center gap-2 text-sm font-bold text-white/40 hover:text-white/70 transition-colors"
-          >
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="10"/>
-              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
-            </svg>
-            Como instalar o app
-          </button>
-        )}
+        {/* Botão "Como instalar o app" — sempre visível */}
+        <button
+          type="button"
+          onClick={() => installVideoUrl ? setIsVideoModalOpen(true) : null}
+          className={cn(
+            "mt-6 w-full flex items-center justify-center gap-2 text-sm font-bold transition-colors",
+            installVideoUrl
+              ? "text-white/40 hover:text-white/70 cursor-pointer"
+              : "text-white/20 cursor-default"
+          )}
+        >
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+          </svg>
+          Como instalar o app
+        </button>
       </GlassCard>
 
       {/* Modal de vídeo de instalação */}
