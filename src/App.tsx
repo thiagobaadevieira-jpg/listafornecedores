@@ -1327,7 +1327,36 @@ const SystemConfigModal = ({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoCopied, setVideoCopied] = useState(false);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCopyVideoUrl = () => {
+    if (!videoUrl) return;
+    try {
+      navigator.clipboard.writeText(videoUrl).then(() => {
+        setVideoCopied(true);
+        setTimeout(() => setVideoCopied(false), 2000);
+      }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = videoUrl;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        setVideoCopied(true);
+        setTimeout(() => setVideoCopied(false), 2000);
+      });
+    } catch {
+      const el = document.createElement('textarea');
+      el.value = videoUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setVideoCopied(true);
+      setTimeout(() => setVideoCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     db.getInstallVideoUrl().then(setVideoUrl);
@@ -1471,15 +1500,28 @@ const SystemConfigModal = ({
                   controls
                   preload="metadata"
                 />
-                <div className="px-3 py-2 flex items-center justify-between">
-                  <p className="text-[10px] text-white/30 font-medium">Vídeo atual</p>
-                  <button
-                    type="button"
-                    onClick={async () => { setVideoUrl(null); await db.setInstallVideoUrl(null); }}
-                    className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    Remover
-                  </button>
+                <div className="px-3 py-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-white/30 font-medium">Vídeo atual</p>
+                    <button
+                      type="button"
+                      onClick={async () => { setVideoUrl(null); await db.setInstallVideoUrl(null); }}
+                      className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
+                    <p className="text-[10px] text-white/30 font-mono truncate flex-1">{videoUrl}</p>
+                    <button
+                      type="button"
+                      onClick={handleCopyVideoUrl}
+                      className="shrink-0 text-[10px] font-bold transition-colors"
+                      style={{ color: videoCopied ? '#4ade80' : '#c9a55a' }}
+                    >
+                      {videoCopied ? 'Copiado!' : 'Copiar'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
