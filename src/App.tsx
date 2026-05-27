@@ -1601,8 +1601,8 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
             <div className="space-y-6"
             >
               {/* Search/Filter Container */}
+              {view !== 'favorites' && (
               <div className="space-y-3 z-[60] bg-[#0a0d1a] pb-3">
-                {view !== 'favorites' && (
                 <div className="flex items-center">
                   <div className="flex-1 h-11 glass rounded-2xl flex items-center px-4 focus-within:border-white/20 transition-colors shadow-inner">
                     <Search className="w-4 h-4 text-white/20 mr-3 shrink-0" />
@@ -1634,11 +1634,9 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                     )}
                   </div>
                 </div>
-                )}
 
                 {/* Category selector */}
-                {view !== 'favorites' && (
-                  <div className="relative">
+                <div className="relative">
                     <button
                       type="button"
                       onClick={() => setIsCategoryFilterOpen(v => !v)}
@@ -1690,9 +1688,9 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         </motion.div>
                       </>
                     )}
-                  </div>
-                )}
+                </div>
               </div>
+              )}
 
               {/* Lista de Fornecedores */}
               <div className="space-y-3">
