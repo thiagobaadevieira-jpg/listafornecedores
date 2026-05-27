@@ -890,9 +890,9 @@ const LoginScreen = () => {
                 src={installVideoUrl}
                 className="w-full max-h-[60vh] object-contain"
                 controls
-                autoPlay
                 playsInline
                 controlsList="nodownload"
+                preload="metadata"
               />
             </div>
           </div>
