@@ -1819,12 +1819,13 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         <button
           onClick={() => {
             const startY = window.scrollY;
-            const duration = 500;
+            const duration = 900;
             const startTime = performance.now();
             const animate = (now: number) => {
               const elapsed = now - startTime;
               const progress = Math.min(elapsed / duration, 1);
-              const ease = 1 - Math.pow(1 - progress, 3);
+              // ease-in-out sine: começa devagar, acelera, desacelera suave no topo
+              const ease = -(Math.cos(Math.PI * progress) - 1) / 2;
               window.scrollTo(0, startY * (1 - ease));
               if (progress < 1) requestAnimationFrame(animate);
             };
