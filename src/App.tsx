@@ -1825,7 +1825,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       )}
 
       {/* WhatsApp FAB */}
-      <
+      <a
         href="https://wa.me/5547996077623"
         target="_blank"
         rel="noreferrer"
