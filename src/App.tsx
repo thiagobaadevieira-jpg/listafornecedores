@@ -1817,7 +1817,19 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       {/* Scroll to top */}
       {scrolled && (
         <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={() => {
+            const startY = window.scrollY;
+            const duration = 500;
+            const startTime = performance.now();
+            const animate = (now: number) => {
+              const elapsed = now - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              const ease = 1 - Math.pow(1 - progress, 3);
+              window.scrollTo(0, startY * (1 - ease));
+              if (progress < 1) requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+          }}
           className={cn("fixed right-8 w-11 h-11 rounded-full glass border border-white/10 flex items-center justify-center shadow-lg z-[90] active:scale-95 transition-all", isAdmin ? "bottom-[13rem]" : "bottom-[7rem]")}
         >
           <ArrowUp className="w-5 h-5 text-white/60" />
