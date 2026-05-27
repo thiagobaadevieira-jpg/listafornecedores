@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
-import { Plus, LayoutDashboard, List, LogOut, Search, Camera, X, ChevronDown, ChevronRight, Settings, Trash2, Menu, Edit2, AlertCircle, User as UserIcon, Instagram, Store, Heart, Users, Phone, Mail, UserCheck, UserX, Check } from "lucide-react";
+import { Plus, LayoutDashboard, List, LogOut, Search, Camera, X, ChevronDown, ChevronRight, Settings, Trash2, Menu, Edit2, AlertCircle, User as UserIcon, Instagram, Store, Heart, Users, Phone, Mail, UserCheck, UserX, Check, ArrowUp } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { User, Supplier, Client } from "@/src/types";
 import { supabase } from "@/src/lib/supabase";
@@ -1814,8 +1814,18 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         </motion.button>
       )}
 
+      {/* Scroll to top */}
+      {scrolled && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className={cn("fixed right-8 w-11 h-11 rounded-full glass border border-white/10 flex items-center justify-center shadow-lg z-[90] active:scale-95 transition-all", isAdmin ? "bottom-[13rem]" : "bottom-[7rem]")}
+        >
+          <ArrowUp className="w-5 h-5 text-white/60" />
+        </button>
+      )}
+
       {/* WhatsApp FAB */}
-      <a
+      <
         href="https://wa.me/5547996077623"
         target="_blank"
         rel="noreferrer"
