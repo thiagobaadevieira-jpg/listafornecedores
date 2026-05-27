@@ -1824,7 +1824,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         <button
           onClick={() => {
             const startY = window.scrollY;
-            const duration = 2000;
+            const duration = 3000;
             const startTime = performance.now();
             const animate = (now: number) => {
               const elapsed = now - startTime;
