@@ -1775,7 +1775,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-colors"
                                 style={{ background: supplier.isFavorite ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.05)' }}>
                                 <Heart
-                                  className="w-4 h-4 transition-colors"
+                                  className="w-5 h-5 transition-colors"
                                   style={{ color: supplier.isFavorite ? '#ef4444' : 'rgba(255,255,255,0.2)' }}
                                   fill={supplier.isFavorite ? '#ef4444' : 'none'}
                                 />
@@ -1786,7 +1786,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                                   onClick={e => e.stopPropagation()}
                                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-colors"
                                   style={{ background: 'rgba(201,165,90,0.12)' }}>
-                                  <Instagram className="w-4 h-4" style={{ color: GOLD }} />
+                                  <Instagram className="w-5 h-5" style={{ color: GOLD }} />
                                 </a>
                               )}
                             </div>
