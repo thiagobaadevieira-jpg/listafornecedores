@@ -937,6 +937,7 @@ const LoginScreen = () => {
                 src={installVideoUrl}
                 className="absolute inset-0 w-full h-full object-cover"
                 playsInline
+                autoPlay
                 preload="metadata"
                 onPlay={() => setVideoPlaying(true)}
                 onPause={() => setVideoPlaying(false)}
