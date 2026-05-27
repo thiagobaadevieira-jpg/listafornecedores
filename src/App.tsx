@@ -1636,59 +1636,61 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                 </div>
 
                 {/* Category selector */}
-                <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setIsCategoryFilterOpen(v => !v)}
-                      className="w-full h-12 glass rounded-[20px] px-5 flex items-center justify-between text-sm font-medium transition-colors"
-                    >
-                      <span className={selectedCategoryFilter === 'all' ? 'text-white/30' : 'text-white/80'}>
-                        {selectedCategoryFilter === 'all' ? 'Selecione a categoria' : selectedCategoryFilter}
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryFilterOpen(v => !v)}
+                  className="w-full h-12 glass rounded-[20px] px-5 flex items-center justify-between text-sm font-medium transition-colors"
+                >
+                  <span className={selectedCategoryFilter === 'all' ? 'text-white/30' : 'text-white/80'}>
+                    {selectedCategoryFilter === 'all' ? 'Selecione a categoria' : selectedCategoryFilter}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {selectedCategoryFilter !== 'all' && (
+                      <span
+                        onClick={e => { e.stopPropagation(); setSelectedCategoryFilter('all'); }}
+                        className="text-xs font-bold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg"
+                      >
+                        Limpar
                       </span>
-                      <div className="flex items-center gap-2">
-                        {selectedCategoryFilter !== 'all' && (
-                          <button
-                            type="button"
-                            onClick={e => { e.stopPropagation(); setSelectedCategoryFilter('all'); }}
-                            className="text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-2.5 py-1 rounded-lg transition-colors"
-                          >
-                            Limpar
-                          </button>
-                        )}
-                        <ChevronDown className={`w-4 h-4 text-white/30 transition-transform duration-200 ${isCategoryFilterOpen ? 'rotate-180' : ''}`} />
-                      </div>
-                    </button>
-
-                    {isCategoryFilterOpen && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setIsCategoryFilterOpen(false)} />
-                        <motion.div
-                          initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          className="absolute left-0 right-0 mt-2 p-1.5 bg-[#161929] border border-white/10 rounded-[20px] shadow-2xl z-20 flex flex-col gap-0.5 overflow-hidden"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => { setSelectedCategoryFilter('all'); setIsCategoryFilterOpen(false); }}
-                            className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-all ${selectedCategoryFilter === 'all' ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
-                          >
-                            Todas as categorias
-                          </button>
-                          {categories.map(c => (
-                            <button
-                              key={c.name}
-                              type="button"
-                              onClick={() => { setSelectedCategoryFilter(c.name); setIsCategoryFilterOpen(false); }}
-                              className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-all flex items-center gap-3 ${selectedCategoryFilter === c.name ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
-                            >
-                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#c9a55a' }} />
-                              {c.name}
-                            </button>
-                          ))}
-                        </motion.div>
-                      </>
                     )}
-                </div>
+                    <ChevronDown className="w-4 h-4 text-white/30" />
+                  </div>
+                </button>
+
+                {/* Modal de categorias */}
+                {isCategoryFilterOpen && (
+                  <>
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150]" onClick={() => setIsCategoryFilterOpen(false)} />
+                    <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[151] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+                      <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+                        <p className="text-sm font-black uppercase tracking-widest text-white/50">Categoria</p>
+                        <button onClick={() => setIsCategoryFilterOpen(false)} className="p-1.5 rounded-xl hover:bg-white/5 text-white/30">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="overflow-y-auto overscroll-contain max-h-[60vh] p-2">
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedCategoryFilter('all'); setIsCategoryFilterOpen(false); }}
+                          className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all ${selectedCategoryFilter === 'all' ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
+                        >
+                          Todas as categorias
+                        </button>
+                        {categories.map(c => (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => { setSelectedCategoryFilter(c.name); setIsCategoryFilterOpen(false); }}
+                            className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all flex items-center gap-3 ${selectedCategoryFilter === c.name ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
+                          >
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#c9a55a' }} />
+                            {c.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               )}
 
