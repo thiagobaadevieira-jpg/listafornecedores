@@ -412,6 +412,35 @@ export async function uploadSystemLogo(file: File): Promise<string> {
   return `${data.publicUrl}?t=${Date.now()}`;
 }
 
+// ─── Install Video ────────────────────────────────────────────────────────────
+
+export async function getInstallVideoUrl(): Promise<string | null> {
+  const { data } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'install_video_url')
+    .single();
+  return data?.value ?? null;
+}
+
+export async function setInstallVideoUrl(url: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('system_settings')
+    .upsert({ key: 'install_video_url', value: url });
+  if (error) throw error;
+}
+
+export async function uploadInstallVideo(file: File): Promise<string> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'mp4';
+  const path = `system/install.${ext}`;
+  const { error } = await supabase.storage
+    .from('videos')
+    .upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from('videos').getPublicUrl(path);
+  return `${data.publicUrl}?t=${Date.now()}`;
+}
+
 // ─── App Settings (compat stub) ───────────────────────────────────────────────
 export async function getAppSettings(): Promise<AppSettings> {
   return { notificationTitle: '', notificationMessage: '' };

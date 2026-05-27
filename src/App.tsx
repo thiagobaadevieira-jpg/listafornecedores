@@ -732,8 +732,13 @@ const LoginScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [systemLogoUrl, setSystemLogoUrl] = useState<string | null>(null);
+  const [installVideoUrl, setInstallVideoUrl] = useState<string | null>(null);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  useEffect(() => { db.getSystemLogoUrl().then(setSystemLogoUrl); }, []);
+  useEffect(() => {
+    db.getSystemLogoUrl().then(setSystemLogoUrl);
+    db.getInstallVideoUrl().then(setInstallVideoUrl);
+  }, []);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -834,7 +839,62 @@ const LoginScreen = () => {
             </button>
           </form>
         )}
+
+        {/* Botão "Como instalar o app" — só aparece se houver vídeo configurado */}
+        {installVideoUrl && (
+          <button
+            type="button"
+            onClick={() => setIsVideoModalOpen(true)}
+            className="mt-6 w-full flex items-center justify-center gap-2 text-sm font-bold text-white/40 hover:text-white/70 transition-colors"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+            </svg>
+            Como instalar o app
+          </button>
+        )}
       </GlassCard>
+
+      {/* Modal de vídeo de instalação */}
+      {isVideoModalOpen && installVideoUrl && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300]"
+            onClick={() => setIsVideoModalOpen(false)}
+          />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[301] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+              <div className="flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-[#c9a55a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+                </svg>
+                <p className="text-sm font-black text-white">Como instalar o app</p>
+              </div>
+              <button
+                onClick={() => setIsVideoModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-white/5 text-white/30 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Player de vídeo */}
+            <div className="bg-black">
+              <video
+                src={installVideoUrl}
+                className="w-full max-h-[60vh] object-contain"
+                controls
+                autoPlay
+                playsInline
+                controlsList="nodownload"
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -1189,6 +1249,18 @@ const SystemConfigModal = ({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Video install
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoSaving, setVideoSaving] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    db.getInstallVideoUrl().then(setVideoUrl);
+  }, []);
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1201,6 +1273,24 @@ const SystemConfigModal = ({
       setError('Erro ao enviar imagem.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleVideoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVideoUploading(true);
+    setVideoError(null);
+    setVideoUploadProgress(0);
+    try {
+      const url = await db.uploadInstallVideo(file);
+      setVideoUrl(url);
+    } catch (err) {
+      setVideoError('Erro ao enviar vídeo. Verifique o tamanho e tente novamente.');
+    } finally {
+      setVideoUploading(false);
+      setVideoUploadProgress(0);
+      if (videoInputRef.current) videoInputRef.current.value = '';
     }
   };
 
@@ -1218,12 +1308,24 @@ const SystemConfigModal = ({
     }
   };
 
+  const handleSaveVideo = async () => {
+    setVideoSaving(true);
+    setVideoError(null);
+    try {
+      await db.setInstallVideoUrl(videoUrl);
+    } catch (err) {
+      setVideoError('Erro ao salvar link do vídeo.');
+    } finally {
+      setVideoSaving(false);
+    }
+  };
+
   const handleRemove = () => setLogoUrl(null);
 
   return (
     <>
       <div className="fixed inset-0 bg-black/70 z-[110]" onClick={onClose} />
-      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[111] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl">
+      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[111] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-black">Configuração do Sistema</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
@@ -1231,11 +1333,10 @@ const SystemConfigModal = ({
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Logo */}
           <div>
             <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Logo do Sistema</p>
-
-            {/* Preview */}
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: '#151c2c' }}>
                 {logoUrl ? (
@@ -1288,8 +1389,78 @@ const SystemConfigModal = ({
             disabled={saving || uploading}
             className="w-full h-12 btn-gradient rounded-2xl font-bold text-sm tracking-wide disabled:opacity-40 transition-opacity active:scale-[0.98]"
           >
-            {saving ? 'Salvando...' : 'Salvar'}
+            {saving ? 'Salvando...' : 'Salvar Logo'}
           </button>
+
+          {/* Divisor */}
+          <div className="border-t border-white/5" />
+
+          {/* Vídeo de instalação */}
+          <div>
+            <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-1">Vídeo "Como Instalar o App"</p>
+            <p className="text-[11px] text-white/20 mb-4">Aparece como botão na tela de login. Formatos: MP4, MOV, WEBM.</p>
+
+            {/* Preview do vídeo atual */}
+            {videoUrl && !videoUploading && (
+              <div className="mb-4 rounded-2xl overflow-hidden border border-white/10 bg-black/30">
+                <video
+                  src={videoUrl}
+                  className="w-full max-h-40 object-contain"
+                  controls
+                  preload="metadata"
+                />
+                <div className="px-3 py-2 flex items-center justify-between">
+                  <p className="text-[10px] text-white/30 font-medium">Vídeo atual</p>
+                  <button
+                    type="button"
+                    onClick={async () => { setVideoUrl(null); await db.setInstallVideoUrl(null); }}
+                    className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Upload */}
+            <button
+              type="button"
+              onClick={() => videoInputRef.current?.click()}
+              disabled={videoUploading}
+              className="w-full h-14 glass rounded-2xl border-2 border-dashed border-white/10 hover:border-white/20 flex items-center justify-center gap-3 transition-colors disabled:opacity-60"
+            >
+              {videoUploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  <span className="text-sm font-bold text-white/50">Enviando vídeo...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M15 10l4.553-2.277A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+                  </svg>
+                  <span className="text-sm font-bold text-white/40">{videoUrl ? 'Trocar vídeo' : 'Escolher vídeo'}</span>
+                </>
+              )}
+            </button>
+            <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoFile} />
+
+            {videoError && (
+              <p className="text-xs text-red-400 mt-2 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {videoError}
+              </p>
+            )}
+
+            {videoUrl && (
+              <button
+                onClick={handleSaveVideo}
+                disabled={videoSaving || videoUploading}
+                className="w-full h-12 mt-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/20 rounded-2xl font-bold text-sm text-green-400 disabled:opacity-40 transition-all active:scale-[0.98]"
+              >
+                {videoSaving ? 'Salvando...' : 'Salvar Vídeo'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </>
@@ -1614,17 +1785,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                     <input
                       value={searchQuery}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        setSearchQuery(val);
-                        if (val) {
-                          setIsFilterPanelOpen(false);
-                          if (selectedCategoryFilter !== "all") {
-                            setSelectedCategoryFilter("all");
-                          }
-                          if (selectedMonthFilter !== "all") {
-                            setSelectedMonthFilter("all");
-                          }
-                        }
+                        setSearchQuery(e.target.value);
                       }}
                       placeholder="Buscar fornecedor..."
                       className="bg-transparent outline-none flex-1 text-sm font-medium placeholder:text-white/20"
