@@ -8,3 +8,10 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+// Auto-update: quando um novo Service Worker é instalado, recarrega a página
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
