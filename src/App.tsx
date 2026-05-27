@@ -898,10 +898,8 @@ const LoginScreen = () => {
                 ref={videoRef}
                 src={installVideoUrl}
                 className="absolute inset-0 w-full h-full object-cover"
-                controls
                 playsInline
-                controlsList="nodownload"
-                preload="none"
+                preload="metadata"
                 onPlay={() => setVideoPlaying(true)}
                 onPause={() => setVideoPlaying(false)}
                 onEnded={() => setVideoPlaying(false)}
@@ -914,12 +912,12 @@ const LoginScreen = () => {
                   className="absolute inset-0 flex items-center justify-center"
                 >
                   {/* Anel pulsante externo */}
-                  <span className="absolute w-20 h-20 rounded-full animate-ping opacity-30" style={{ background: '#c9a55a' }} />
+                  <span className="absolute w-28 h-28 rounded-full animate-ping opacity-20" style={{ background: '#c9a55a' }} />
                   {/* Anel médio */}
-                  <span className="absolute w-16 h-16 rounded-full opacity-50" style={{ background: '#c9a55a' }} />
+                  <span className="absolute w-24 h-24 rounded-full opacity-30" style={{ background: '#c9a55a' }} />
                   {/* Botão play central */}
-                  <span className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl" style={{ background: '#c9a55a' }}>
-                    <svg className="w-6 h-6 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+                  <span className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-2xl" style={{ background: '#c9a55a' }}>
+                    <svg className="w-9 h-9 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
                       <polygon points="5 3 19 12 5 21 5 3"/>
                     </svg>
                   </span>
