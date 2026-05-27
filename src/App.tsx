@@ -1402,6 +1402,28 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Suppliers filtrados e visíveis
+  const filteredSuppliers = useMemo(() => suppliers.filter(s => {
+    if (view === 'favorites') return !!s.isFavorite;
+    const matchCat = selectedCategoryFilter === "all" || s.category === selectedCategoryFilter;
+    const codeStr = String(s.code).padStart(3, '0');
+    const q = searchQuery.toLowerCase().replace(/^#/, '');
+    const matchSearch = !searchQuery || s.name.toLowerCase().includes(q) || s.instagram?.toLowerCase().includes(q) || codeStr.includes(q);
+    return matchCat && matchSearch;
+  }), [suppliers, view, selectedCategoryFilter, searchQuery]);
+
+  const visibleSuppliers = useMemo(() => filteredSuppliers.slice(0, visibleCount), [filteredSuppliers, visibleCount]);
+
+  // Pré-carrega fotos em useEffect (fora do render) para evitar re-renders em cascata
+  useEffect(() => {
+    visibleSuppliers.forEach(s => {
+      if (!s.photoUrl || loadedPhotos.has(s.id)) return;
+      const img = new Image();
+      img.onload = () => setLoadedPhotos(prev => { const n = new Set(prev); n.add(s.id); return n; });
+      img.onerror = () => setLoadedPhotos(prev => { const n = new Set(prev); n.add(s.id); return n; });
+      img.src = s.photoUrl;
+    });
+  }, [visibleSuppliers]);
 
   // ─── Early returns AFTER all hooks ───────────────────────────────────────────
   if (dataLoading) {
@@ -1683,14 +1705,8 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
               {/* Lista de Fornecedores */}
               <div className="space-y-3">
                 {(() => {
-                  const filtered = suppliers.filter(s => {
-                    if (view === 'favorites') return !!s.isFavorite;
-                    const matchCat = selectedCategoryFilter === "all" || s.category === selectedCategoryFilter;
-                    const codeStr = String(s.code).padStart(3, '0');
-                    const q = searchQuery.toLowerCase().replace(/^#/, '');
-                    const matchSearch = !searchQuery || s.name.toLowerCase().includes(q) || s.instagram?.toLowerCase().includes(q) || codeStr.includes(q);
-                    return matchCat && matchSearch;
-                  });
+                  const filtered = filteredSuppliers;
+                  const visible = visibleSuppliers;
 
                   if (filtered.length === 0) return (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -1716,17 +1732,6 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                       )}
                     </motion.div>
                   );
-
-                  const visible = filtered.slice(0, visibleCount);
-
-                  // Pré-carrega fotos invisíveis; card só aparece quando pronto
-                  visible.forEach(s => {
-                    if (!s.photoUrl || loadedPhotos.has(s.id)) return;
-                    const img = new Image();
-                    img.onload = () => setLoadedPhotos(prev => { const n = new Set(prev); n.add(s.id); return n; });
-                    img.onerror = () => setLoadedPhotos(prev => { const n = new Set(prev); n.add(s.id); return n; });
-                    img.src = s.photoUrl;
-                  });
 
                   // Mostra em ordem: só avança para o próximo quando o anterior já apareceu
                   let displayCount = 0;
