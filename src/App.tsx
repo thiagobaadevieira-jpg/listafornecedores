@@ -1391,10 +1391,15 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     setVisibleCount(20);
   }, [searchQuery, selectedCategoryFilter, view]);
 
-  // Load more + track scroll for header hide
+  // Load more + track scroll — usa ref para evitar re-renders desnecessários
+  const scrolledRef = useRef(false);
   useEffect(() => {
     const onScroll = () => {
-      setScrolled(window.scrollY > 60);
+      const isScrolled = window.scrollY > 60;
+      if (isScrolled !== scrolledRef.current) {
+        scrolledRef.current = isScrolled;
+        setScrolled(isScrolled);
+      }
       const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 400;
       if (nearBottom) setVisibleCount(n => n + 20);
     };
@@ -1556,7 +1561,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-6 pt-28 overflow-x-hidden">
+      <div className="max-w-2xl mx-auto px-6 pt-28">
         {/* View Switcher Refined */}
         <div className="flex p-1 sm:p-1.5 glass rounded-2xl mb-10 z-[70]">
           <button
