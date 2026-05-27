@@ -1750,12 +1750,12 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.35, ease: 'easeOut' }}
                         onClick={async () => {
+                          if (!isAdmin) return; // clientes não abrem modal
                           setIsSupplierModalOpen(true);
-                          // Busca detalhes completos (incluindo note) só ao abrir
                           const detail = await db.getSupplierDetail(supplier.id);
                           setEditingSupplier(detail ?? supplier);
                         }}
-                        className="interactive-glass rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 flex items-center justify-between group gap-4 cursor-pointer"
+                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 flex items-center justify-between group gap-4", isAdmin ? "cursor-pointer" : "cursor-default")}
                       >
                         <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
                           {/* Avatar / foto */}
