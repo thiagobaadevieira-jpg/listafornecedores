@@ -893,11 +893,11 @@ const LoginScreen = () => {
             </div>
 
             {/* Player de vídeo com botão pulsante */}
-            <div className="bg-black relative">
+            <div className="bg-black relative w-full" style={{ aspectRatio: '9/16', maxHeight: '70vh' }}>
               <video
                 ref={videoRef}
                 src={installVideoUrl}
-                className="w-full max-h-[60vh] object-contain"
+                className="absolute inset-0 w-full h-full object-cover"
                 controls
                 playsInline
                 controlsList="nodownload"
