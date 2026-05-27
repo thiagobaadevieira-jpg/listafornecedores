@@ -905,6 +905,30 @@ const LoginScreen = () => {
                 onEnded={() => setVideoPlaying(false)}
               />
 
+              {/* Poster — fundo escuro com logo antes do vídeo carregar */}
+              {!videoPlaying && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-6" style={{ background: '#0a0d1a' }}>
+                  {/* Logo */}
+                  <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center border border-white/10 shadow-2xl" style={{ background: '#151c2c' }}>
+                    {systemLogoUrl ? (
+                      <img src={systemLogoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <defs>
+                          <linearGradient id="pgold2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#e8c97a" />
+                            <stop offset="100%" stopColor="#a07830" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M17 18 Q17 10 24 10 Q31 10 31 18" stroke="url(#pgold2)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                        <text x="7" y="44" fontFamily="Georgia,serif" fontWeight="900" fontSize="40" fill="url(#pgold2)">B</text>
+                      </svg>
+                    )}
+                  </div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-white/30">Bras Conect</p>
+                </div>
+              )}
+
               {/* Botão play pulsante — some quando o vídeo inicia */}
               {!videoPlaying && (
                 <button
