@@ -1255,9 +1255,7 @@ const SystemConfigModal = ({
   // Video install
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoUploading, setVideoUploading] = useState(false);
-  const [videoSaving, setVideoSaving] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1284,15 +1282,14 @@ const SystemConfigModal = ({
     if (!file) return;
     setVideoUploading(true);
     setVideoError(null);
-    setVideoUploadProgress(0);
     try {
       const url = await db.uploadInstallVideo(file);
+      await db.setInstallVideoUrl(url);
       setVideoUrl(url);
     } catch (err) {
       setVideoError('Erro ao enviar vídeo. Verifique o tamanho e tente novamente.');
     } finally {
       setVideoUploading(false);
-      setVideoUploadProgress(0);
       if (videoInputRef.current) videoInputRef.current.value = '';
     }
   };
@@ -1311,17 +1308,6 @@ const SystemConfigModal = ({
     }
   };
 
-  const handleSaveVideo = async () => {
-    setVideoSaving(true);
-    setVideoError(null);
-    try {
-      await db.setInstallVideoUrl(videoUrl);
-    } catch (err) {
-      setVideoError('Erro ao salvar link do vídeo.');
-    } finally {
-      setVideoSaving(false);
-    }
-  };
 
   const handleRemove = () => setLogoUrl(null);
 
@@ -1401,7 +1387,7 @@ const SystemConfigModal = ({
           {/* Vídeo de instalação */}
           <div>
             <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-1">Vídeo "Como Instalar o App"</p>
-            <p className="text-[11px] text-white/20 mb-4">Aparece como botão na tela de login. Formatos: MP4, MOV, WEBM.</p>
+            <p className="text-[11px] text-white/20 mb-4">Aparece como botão na tela de login. Formatos: MP4, MOV, WEBM. O vídeo é salvo automaticamente após o envio.</p>
 
             {/* Preview do vídeo atual */}
             {videoUrl && !videoUploading && (
@@ -1452,16 +1438,6 @@ const SystemConfigModal = ({
               <p className="text-xs text-red-400 mt-2 flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {videoError}
               </p>
-            )}
-
-            {videoUrl && (
-              <button
-                onClick={handleSaveVideo}
-                disabled={videoSaving || videoUploading}
-                className="w-full h-12 mt-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/20 rounded-2xl font-bold text-sm text-green-400 disabled:opacity-40 transition-all active:scale-[0.98]"
-              >
-                {videoSaving ? 'Salvando...' : 'Salvar Vídeo'}
-              </button>
             )}
           </div>
         </div>
