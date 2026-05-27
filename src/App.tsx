@@ -1385,18 +1385,30 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const [visibleCount, setVisibleCount] = useState(20);
   const [scrolled, setScrolled] = useState(false);
   const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
 
   // Reset visibleCount when filter/search/view changes
   useEffect(() => {
     setVisibleCount(20);
+    setIsLoadingMore(false);
+    loadingMoreRef.current = false;
   }, [searchQuery, selectedCategoryFilter, view]);
 
   // Load more + track scroll for header hide
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 60);
-      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 400;
-      if (nearBottom) setVisibleCount(n => n + 20);
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 300;
+      if (nearBottom && !loadingMoreRef.current) {
+        loadingMoreRef.current = true;
+        setIsLoadingMore(true);
+        setTimeout(() => {
+          setVisibleCount(n => n + 20);
+          setIsLoadingMore(false);
+          loadingMoreRef.current = false;
+        }, 600);
+      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -1797,6 +1809,26 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                   </>);
                 })()}
               </div>
+
+              {/* Indicador de scroll infinito */}
+              {filteredSuppliers.length > 0 && (
+                <div className="py-6 flex flex-col items-center gap-2">
+                  {isLoadingMore ? (
+                    <div className="flex items-center gap-2 text-white/30">
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-[#c9a55a] rounded-full animate-spin" />
+                      <span className="text-xs font-bold">Carregando mais...</span>
+                    </div>
+                  ) : visibleCount >= filteredSuppliers.length ? (
+                    <p className="text-[11px] text-white/20 font-bold">
+                      {filteredSuppliers.length} fornecedor{filteredSuppliers.length !== 1 ? 'es' : ''} no total
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-white/20 font-bold">
+                      {Math.min(visibleCount, filteredSuppliers.length)} de {filteredSuppliers.length} fornecedores
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </>
