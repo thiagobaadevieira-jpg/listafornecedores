@@ -735,6 +735,7 @@ const LoginScreen = () => {
   const [installVideoUrl, setInstallVideoUrl] = useState<string | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -746,6 +747,33 @@ const LoginScreen = () => {
     setIsVideoModalOpen(false);
     setVideoPlaying(false);
     if (videoRef.current) videoRef.current.pause();
+  };
+
+  const handleOpenVideoModal = () => {
+    if (!installVideoUrl || videoLoading) return;
+    setVideoLoading(true);
+
+    const tempVideo = document.createElement('video');
+    tempVideo.src = installVideoUrl;
+    tempVideo.preload = 'auto';
+    tempVideo.playsInline = true;
+    tempVideo.muted = true;
+
+    // Timeout de segurança: abre após 6s mesmo sem carregar completamente
+    const timeout = setTimeout(() => {
+      setVideoLoading(false);
+      setIsVideoModalOpen(true);
+    }, 6000);
+
+    const open = () => {
+      clearTimeout(timeout);
+      setVideoLoading(false);
+      setIsVideoModalOpen(true);
+    };
+
+    tempVideo.addEventListener('loadeddata', open, { once: true });
+    tempVideo.addEventListener('error', open, { once: true });
+    tempVideo.load();
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -851,19 +879,29 @@ const LoginScreen = () => {
         {/* Botão "Como instalar o app" — sempre visível */}
         <button
           type="button"
-          onClick={() => installVideoUrl ? setIsVideoModalOpen(true) : null}
+          onClick={handleOpenVideoModal}
+          disabled={videoLoading}
           className={cn(
             "mt-6 w-full flex items-center justify-center gap-2.5 h-12 rounded-2xl border font-bold text-sm transition-all",
-            installVideoUrl
+            installVideoUrl && !videoLoading
               ? "border-[#c9a55a]/30 text-[#c9a55a] hover:bg-[#c9a55a]/10 active:scale-95 cursor-pointer"
               : "border-white/10 text-white/25 cursor-default"
           )}
         >
-          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10"/>
-            <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
-          </svg>
-          Como instalar o app
+          {videoLoading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-[#c9a55a]/30 border-t-[#c9a55a] rounded-full animate-spin shrink-0" />
+              Carregando vídeo...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+              </svg>
+              Como instalar o app
+            </>
+          )}
         </button>
       </GlassCard>
 
