@@ -1738,26 +1738,26 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                       <div key={supplier.id}
                         onClick={async () => {
                           if (!isAdmin) return; // clientes não abrem modal
-                          setIsSupplierModalOpen(true);
                           const detail = await db.getSupplierDetail(supplier.id);
                           setEditingSupplier(detail ?? supplier);
+                          setIsSupplierModalOpen(true);
                         }}
-                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] p-5 sm:p-7 flex items-center justify-between group gap-4", isAdmin ? "cursor-pointer" : "cursor-default")}
+                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] p-3 sm:p-7 flex items-center justify-between group gap-3 sm:gap-4", isAdmin ? "cursor-pointer" : "cursor-default")}
                       >
-                        <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
+                        <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
                           {/* Avatar / foto */}
                           {supplier.photoUrl ? (
                             <img src={supplier.photoUrl} alt={supplier.name}
-                              className="w-[90px] h-[90px] rounded-full object-cover shrink-0 border-2 border-white/20" />
+                              className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full object-cover shrink-0 border-2 border-white/20" />
                           ) : (
-                            <div className="w-[90px] h-[90px] rounded-full shrink-0 flex items-center justify-center text-2xl font-black"
+                            <div className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full shrink-0 flex items-center justify-center text-xl sm:text-2xl font-black"
                               style={{ background: 'rgba(201,165,90,0.15)', color: GOLD }}>
                               {supplier.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-bold text-lg leading-tight truncate" style={{ color: GOLD }}>{supplier.name}</h4>
+                              <h4 className="font-bold text-base sm:text-lg leading-tight truncate" style={{ color: GOLD }}>{supplier.name}</h4>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
@@ -1769,13 +1769,13 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           </div>
                         </div>
                         {/* Ações */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                           <button
                             onClick={async e => { e.stopPropagation(); await db.toggleFavoriteSupplier(supplier.id, user.id, !!supplier.isFavorite); setSuppliers(await db.getSuppliersWithFavorites(user.id)); }}
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-colors"
                             style={{ background: supplier.isFavorite ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.05)' }}>
                             <Heart
-                              className="w-5 h-5 transition-colors"
+                              className="w-4 h-4 sm:w-5 sm:h-5 transition-colors"
                               style={{ color: supplier.isFavorite ? '#ef4444' : 'rgba(255,255,255,0.2)' }}
                               fill={supplier.isFavorite ? '#ef4444' : 'none'}
                             />
@@ -1784,9 +1784,9 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                             <a href={`https://instagram.com/${supplier.instagram.replace('@','')}`}
                               target="_blank" rel="noreferrer"
                               onClick={e => e.stopPropagation()}
-                              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors"
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-colors"
                               style={{ background: 'rgba(201,165,90,0.12)' }}>
-                              <Instagram className="w-5 h-5" style={{ color: GOLD }} />
+                              <Instagram className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: GOLD }} />
                             </a>
                           )}
                         </div>
