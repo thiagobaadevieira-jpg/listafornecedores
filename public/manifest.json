@@ -1,11 +1,11 @@
 {
-  "name": "Controle de Gastos",
-  "short_name": "Controle de Gastos",
-  "description": "Sistema de gestão financeira e controle de gastos.",
+  "name": "Bras Conect",
+  "short_name": "Bras Conect",
+  "description": "Lista de fornecedores Bras Conect.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#090a0f",
-  "theme_color": "#090a0f",
+  "background_color": "#0a0d1a",
+  "theme_color": "#0a0d1a",
   "orientation": "portrait-primary",
   "icons": [
     {

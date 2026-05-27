@@ -784,7 +784,7 @@ const LoginScreen = () => {
             : <Store className="w-10 h-10 text-[#c9a55a] stroke-[2]" />
           }
         </div>
-        <h1 className="text-3xl font-bold mb-1 tracking-tighter">Lista de Fornecedores</h1>
+        <h1 className="text-3xl font-bold mb-1 tracking-tighter">Bras Conect</h1>
         <p className="text-white/30 mb-10 text-xs font-bold uppercase tracking-[0.2em]">acesse sua conta</p>
 
         {step === 'email' ? (
@@ -1456,7 +1456,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
             )}
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight">Lista de Fornecedores</h1>
+            <h1 className="text-base font-bold tracking-tight">Bras Conect</h1>
           </div>
         </div>
         
