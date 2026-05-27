@@ -1742,7 +1742,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           setEditingSupplier(detail ?? supplier);
                           setIsSupplierModalOpen(true);
                         }}
-                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] p-3 sm:p-7 flex items-center gap-3 sm:gap-5 group", isAdmin ? "cursor-pointer" : "cursor-default")}
+                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5 group", isAdmin ? "cursor-pointer" : "cursor-default")}
                       >
                         {/* Avatar / foto */}
                         {supplier.photoUrl ? (
@@ -1768,7 +1768,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         </div>
 
                         {/* Ações — empilhadas verticalmente à direita */}
-                        <div className="flex flex-col items-center gap-1.5 shrink-0">
+                        <div className="flex flex-col items-center gap-3 shrink-0">
                           <button
                             onClick={async e => { e.stopPropagation(); await db.toggleFavoriteSupplier(supplier.id, user.id, !!supplier.isFavorite); setSuppliers(await db.getSuppliersWithFavorites(user.id)); }}
                             className="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors"
