@@ -1762,33 +1762,32 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
                             <p className="text-xs text-white/40 font-black uppercase tracking-widest">{supplier.category}</p>
                           </div>
-                          {/* Código + botões na mesma linha */}
-                          <div className="flex items-center justify-between mt-1.5">
-                            <p className="text-[10px] font-bold" style={{ color: 'rgba(201,165,90,0.45)' }}>
-                              #{String(supplier.code).padStart(3, '0')}
-                            </p>
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                onClick={async e => { e.stopPropagation(); await db.toggleFavoriteSupplier(supplier.id, user.id, !!supplier.isFavorite); setSuppliers(await db.getSuppliersWithFavorites(user.id)); }}
-                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-colors"
-                                style={{ background: supplier.isFavorite ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.05)' }}>
-                                <Heart
-                                  className="w-5 h-5 transition-colors"
-                                  style={{ color: supplier.isFavorite ? '#ef4444' : 'rgba(255,255,255,0.2)' }}
-                                  fill={supplier.isFavorite ? '#ef4444' : 'none'}
-                                />
-                              </button>
-                              {supplier.instagram && (
-                                <a href={`https://instagram.com/${supplier.instagram.replace('@','')}`}
-                                  target="_blank" rel="noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-colors"
-                                  style={{ background: 'rgba(201,165,90,0.12)' }}>
-                                  <Instagram className="w-5 h-5" style={{ color: GOLD }} />
-                                </a>
-                              )}
-                            </div>
-                          </div>
+                          <p className="text-[10px] font-bold mt-1.5" style={{ color: 'rgba(201,165,90,0.45)' }}>
+                            #{String(supplier.code).padStart(3, '0')}
+                          </p>
+                        </div>
+
+                        {/* Ações — empilhadas verticalmente à direita */}
+                        <div className="flex flex-col items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={async e => { e.stopPropagation(); await db.toggleFavoriteSupplier(supplier.id, user.id, !!supplier.isFavorite); setSuppliers(await db.getSuppliersWithFavorites(user.id)); }}
+                            className="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors"
+                            style={{ background: supplier.isFavorite ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.05)' }}>
+                            <Heart
+                              className="w-5 h-5 transition-colors"
+                              style={{ color: supplier.isFavorite ? '#ef4444' : 'rgba(255,255,255,0.2)' }}
+                              fill={supplier.isFavorite ? '#ef4444' : 'none'}
+                            />
+                          </button>
+                          {supplier.instagram && (
+                            <a href={`https://instagram.com/${supplier.instagram.replace('@','')}`}
+                              target="_blank" rel="noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors"
+                              style={{ background: 'rgba(201,165,90,0.12)' }}>
+                              <Instagram className="w-5 h-5" style={{ color: GOLD }} />
+                            </a>
+                          )}
                         </div>
                       </div>
                     );
