@@ -964,6 +964,7 @@ const BannerSettingsModal = ({ isOpen, onClose, banners, onRefresh }: {
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { setUploadError('Imagem muito grande. Máximo 8 MB.'); return; }
     setUploading(true);
     setUploadError(null);
     try {
@@ -1115,6 +1116,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { alert('Imagem muito grande. Máximo 8 MB.'); return; }
     setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = ev => setPhotoUrl(ev.target?.result as string);
@@ -1265,6 +1267,7 @@ const SystemConfigModal = ({
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { setError('Imagem muito grande. Máximo 8 MB.'); return; }
     setUploading(true);
     setError(null);
     try {
@@ -1280,6 +1283,7 @@ const SystemConfigModal = ({
   const handleVideoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 200 * 1024 * 1024) { setVideoError('Vídeo muito grande. Máximo 200 MB.'); return; }
     setVideoUploading(true);
     setVideoError(null);
     try {
