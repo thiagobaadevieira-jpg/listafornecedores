@@ -1556,7 +1556,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-6 pt-28">
+      <div className="max-w-2xl mx-auto px-6 pt-28 overflow-x-hidden">
         {/* View Switcher Refined */}
         <div className="flex p-1.5 glass rounded-2xl mb-10 z-[70]">
           <button 
@@ -1591,24 +1591,14 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
           </button>
         </div>
 
-        <AnimatePresence mode="wait">
+        <>
           {view === 'overview' ? (
-            <motion.div
-              key="overview"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
+            <div className="space-y-6"
             >
               <BannerGrid banners={banners} />
-            </motion.div>
+            </div>
           ) : (
-            <motion.div
-              key={view}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
+            <div className="space-y-6"
             >
               {/* Search/Filter Container */}
               <div className="space-y-3 z-[60] bg-[#0a0d1a] pb-3 -mx-6 px-6">
@@ -1745,10 +1735,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                   {readySuppliers.map((supplier) => {
                     const GOLD = '#c9a55a';
                     return (
-                      <motion.div key={supplier.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35, ease: 'easeOut' }}
+                      <div key={supplier.id}
                         onClick={async () => {
                           if (!isAdmin) return; // clientes não abrem modal
                           setIsSupplierModalOpen(true);
@@ -1803,15 +1790,15 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                             </a>
                           )}
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                   </>);
                 })()}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
       </div>
 
       {/* Floating Action Button — apenas admin */}
