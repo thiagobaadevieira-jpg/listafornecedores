@@ -1744,53 +1744,53 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           setEditingSupplier(detail ?? supplier);
                           setIsSupplierModalOpen(true);
                         }}
-                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] p-3 sm:p-7 flex items-center justify-between group gap-3 sm:gap-4", isAdmin ? "cursor-pointer" : "cursor-default")}
+                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] p-3 sm:p-7 flex items-center gap-3 sm:gap-5 group", isAdmin ? "cursor-pointer" : "cursor-default")}
                       >
-                        <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
-                          {/* Avatar / foto */}
-                          {supplier.photoUrl ? (
-                            <img src={supplier.photoUrl} alt={supplier.name}
-                              className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full object-cover shrink-0 border-2 border-white/20" />
-                          ) : (
-                            <div className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full shrink-0 flex items-center justify-center text-xl sm:text-2xl font-black"
-                              style={{ background: 'rgba(201,165,90,0.15)', color: GOLD }}>
-                              {supplier.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-bold text-base sm:text-lg leading-tight truncate" style={{ color: GOLD }}>{supplier.name}</h4>
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                              <p className="text-xs text-white/40 font-black uppercase tracking-widest">{supplier.category}</p>
-                            </div>
-                            <p className="text-[10px] font-bold mt-1.5" style={{ color: 'rgba(201,165,90,0.45)' }}>
+                        {/* Avatar / foto */}
+                        {supplier.photoUrl ? (
+                          <img src={supplier.photoUrl} alt={supplier.name}
+                            className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full object-cover shrink-0 border-2 border-white/20" />
+                        ) : (
+                          <div className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full shrink-0 flex items-center justify-center text-xl sm:text-2xl font-black"
+                            style={{ background: 'rgba(201,165,90,0.15)', color: GOLD }}>
+                            {supplier.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
+                          </div>
+                        )}
+
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-base sm:text-lg leading-tight" style={{ color: GOLD }}>{supplier.name}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                            <p className="text-xs text-white/40 font-black uppercase tracking-widest">{supplier.category}</p>
+                          </div>
+                          {/* Código + botões na mesma linha */}
+                          <div className="flex items-center justify-between mt-1.5">
+                            <p className="text-[10px] font-bold" style={{ color: 'rgba(201,165,90,0.45)' }}>
                               #{String(supplier.code).padStart(3, '0')}
                             </p>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={async e => { e.stopPropagation(); await db.toggleFavoriteSupplier(supplier.id, user.id, !!supplier.isFavorite); setSuppliers(await db.getSuppliersWithFavorites(user.id)); }}
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-colors"
+                                style={{ background: supplier.isFavorite ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.05)' }}>
+                                <Heart
+                                  className="w-4 h-4 transition-colors"
+                                  style={{ color: supplier.isFavorite ? '#ef4444' : 'rgba(255,255,255,0.2)' }}
+                                  fill={supplier.isFavorite ? '#ef4444' : 'none'}
+                                />
+                              </button>
+                              {supplier.instagram && (
+                                <a href={`https://instagram.com/${supplier.instagram.replace('@','')}`}
+                                  target="_blank" rel="noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-colors"
+                                  style={{ background: 'rgba(201,165,90,0.12)' }}>
+                                  <Instagram className="w-4 h-4" style={{ color: GOLD }} />
+                                </a>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        {/* Ações */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                          <button
-                            onClick={async e => { e.stopPropagation(); await db.toggleFavoriteSupplier(supplier.id, user.id, !!supplier.isFavorite); setSuppliers(await db.getSuppliersWithFavorites(user.id)); }}
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-colors"
-                            style={{ background: supplier.isFavorite ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.05)' }}>
-                            <Heart
-                              className="w-4 h-4 sm:w-5 sm:h-5 transition-colors"
-                              style={{ color: supplier.isFavorite ? '#ef4444' : 'rgba(255,255,255,0.2)' }}
-                              fill={supplier.isFavorite ? '#ef4444' : 'none'}
-                            />
-                          </button>
-                          {supplier.instagram && (
-                            <a href={`https://instagram.com/${supplier.instagram.replace('@','')}`}
-                              target="_blank" rel="noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-colors"
-                              style={{ background: 'rgba(201,165,90,0.12)' }}>
-                              <Instagram className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: GOLD }} />
-                            </a>
-                          )}
                         </div>
                       </div>
                     );
