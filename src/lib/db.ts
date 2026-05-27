@@ -269,12 +269,34 @@ export async function deleteBanner(id: string): Promise<void> {
   if (error) throw error;
 }
 
+async function convertToWebP(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) { reject(new Error('Falha ao converter imagem')); return; }
+        resolve(new File([blob], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' }));
+      }, 'image/webp', 0.92);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Falha ao carregar imagem')); };
+    img.src = url;
+  });
+}
+
 export async function uploadBannerPhoto(file: File): Promise<string> {
-  const ext = file.name.split('.').pop();
+  // Converte AVIF (e qualquer outro formato) para WebP antes de enviar
+  const uploadFile = file.type === 'image/avif' ? await convertToWebP(file) : file;
+  const ext = uploadFile.name.split('.').pop()?.toLowerCase() ?? 'webp';
   const path = `${Date.now()}.${ext}`;
   const { error } = await supabase.storage
     .from('banners')
-    .upload(path, file, { upsert: true });
+    .upload(path, uploadFile, { upsert: true, contentType: uploadFile.type });
   if (error) throw error;
   const { data } = supabase.storage.from('banners').getPublicUrl(path);
   return data.publicUrl;

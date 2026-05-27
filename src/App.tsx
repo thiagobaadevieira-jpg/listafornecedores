@@ -841,44 +841,39 @@ const LoginScreen = () => {
 
 // ─── Banner Carousel ──────────────────────────────────────────────────────────
 
-const BannerCarousel = ({ banners }: { banners: import('./types').Banner[] }) => {
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    if (banners.length <= 1) return;
-    const t = setInterval(() => setCurrent(i => (i + 1) % banners.length), 4000);
-    return () => clearInterval(t);
-  }, [banners.length]);
-
+const BannerGrid = ({ banners }: { banners: import('./types').Banner[] }) => {
   if (banners.length === 0) return null;
 
-  const b = banners[current];
-  const handleClick = () => { if (b.link) window.open(b.link, '_blank', 'noreferrer'); };
+  const [first, ...rest] = banners;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-[24px]">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={b.id}
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -40 }}
-          transition={{ duration: 0.4 }}
-          onClick={handleClick}
-          className={b.link ? 'cursor-pointer' : 'cursor-default'}
-        >
-          <img src={b.photoUrl} alt="banner" className="w-full h-40 object-cover rounded-[24px]" />
-        </motion.div>
-      </AnimatePresence>
+    <div className="w-full flex flex-col gap-3 overflow-hidden">
+      {/* Primeiro banner — largura total 16:9 */}
+      <motion.div
+        key={first.id}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        onClick={() => { if (first.link) window.open(first.link, '_blank', 'noreferrer'); }}
+        className={cn("w-full relative aspect-video overflow-hidden rounded-[20px]", first.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : '')}
+      >
+        <img src={first.photoUrl} alt="banner 1" className="w-full h-full object-cover" />
+      </motion.div>
 
-      {banners.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {banners.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`h-1.5 rounded-full transition-all ${i === current ? 'w-5 bg-white' : 'w-1.5 bg-white/30'}`}
-            />
+      {/* Demais banners — grade 2 por linha, 1:1 */}
+      {rest.length > 0 && (
+        <div className="w-full grid grid-cols-2 gap-3">
+          {rest.map((b, i) => (
+            <motion.div
+              key={b.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: i * 0.05 }}
+              onClick={() => { if (b.link) window.open(b.link, '_blank', 'noreferrer'); }}
+              className={cn("relative aspect-square overflow-hidden rounded-[16px]", b.link ? 'cursor-pointer active:scale-[0.97] transition-transform' : '')}
+            >
+              <img src={b.photoUrl} alt={`banner ${i + 2}`} className="w-full h-full object-cover" />
+            </motion.div>
           ))}
         </div>
       )}
@@ -898,6 +893,7 @@ const BannerSettingsModal = ({ isOpen, onClose, banners, onRefresh }: {
   const [photoUrl, setPhotoUrl] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -906,13 +902,17 @@ const BannerSettingsModal = ({ isOpen, onClose, banners, onRefresh }: {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setUploadError(null);
     try {
       const url = await db.uploadBannerPhoto(file);
       setPhotoUrl(url);
-    } catch (err) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error('Erro ao fazer upload:', err);
+      setUploadError(`Erro ao enviar: ${msg}`);
     } finally {
       setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -974,10 +974,9 @@ const BannerSettingsModal = ({ isOpen, onClose, banners, onRefresh }: {
             )}
 
             {/* Formulário adicionar/editar */}
-            {banners.length < 3 || editingId ? (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/30">
-                  {editingId ? 'Editar Banner' : `Novo Banner (${banners.length}/3)`}
+                  {editingId ? 'Editar Banner' : `Novo Banner (${banners.length} cadastrado${banners.length !== 1 ? 's' : ''})`}
                 </p>
 
                 {/* Upload foto */}
@@ -995,7 +994,13 @@ const BannerSettingsModal = ({ isOpen, onClose, banners, onRefresh }: {
                     </>
                   )}
                 </button>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+                <input ref={fileInputRef} type="file" accept="image/*,image/avif,.avif" className="hidden" onChange={handlePhoto} />
+
+                {uploadError && (
+                  <p className="text-red-400 text-xs font-bold flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {uploadError}
+                  </p>
+                )}
 
                 {/* Link */}
                 <div>
@@ -1016,10 +1021,7 @@ const BannerSettingsModal = ({ isOpen, onClose, banners, onRefresh }: {
                     {editingId ? 'Salvar' : 'Adicionar'}
                   </button>
                 </div>
-              </div>
-            ) : (
-              <p className="text-xs text-white/30 text-center py-2">Máximo de 3 banners atingido.</p>
-            )}
+            </div>
           </div>
         </>
       )}
@@ -1576,7 +1578,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
-              <BannerCarousel banners={banners} />
+              <BannerGrid banners={banners} />
             </motion.div>
           ) : (
             <motion.div
