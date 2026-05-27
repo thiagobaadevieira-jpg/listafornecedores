@@ -845,10 +845,10 @@ const LoginScreen = () => {
           type="button"
           onClick={() => installVideoUrl ? setIsVideoModalOpen(true) : null}
           className={cn(
-            "mt-6 w-full flex items-center justify-center gap-2 text-sm font-bold transition-colors",
+            "mt-6 w-full flex items-center justify-center gap-2.5 h-12 rounded-2xl border font-bold text-sm transition-all",
             installVideoUrl
-              ? "text-white/40 hover:text-white/70 cursor-pointer"
-              : "text-white/20 cursor-default"
+              ? "border-[#c9a55a]/30 text-[#c9a55a] hover:bg-[#c9a55a]/10 active:scale-95 cursor-pointer"
+              : "border-white/10 text-white/25 cursor-default"
           )}
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
