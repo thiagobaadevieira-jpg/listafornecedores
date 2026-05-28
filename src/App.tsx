@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
-import { Plus, LayoutDashboard, List, LogOut, Search, Camera, X, ChevronDown, ChevronRight, Settings, Trash2, Menu, Edit2, AlertCircle, User as UserIcon, Instagram, Store, Heart, Users, Phone, Mail, UserCheck, UserX, Check, ArrowUp } from "lucide-react";
+import { Plus, LayoutDashboard, List, LogOut, Search, Camera, X, ChevronDown, ChevronRight, Settings, Trash2, Menu, Edit2, AlertCircle, User as UserIcon, Instagram, Store, Heart, Users, Phone, Mail, UserCheck, UserX, Check, ArrowUp, Bell, Send } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { User, Supplier, Client } from "@/src/types";
 import { supabase } from "@/src/lib/supabase";
@@ -1723,6 +1723,171 @@ const SystemConfigModal = ({
   );
 };
 
+// ─── Notifications Modal ──────────────────────────────────────────────────────
+
+const NotificationsModal = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [history, setHistory] = useState<import('@/src/lib/db').Notification[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setHistoryLoading(true);
+    db.getNotificationsHistory()
+      .then(setHistory)
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false));
+  }, [isOpen]);
+
+  const handleSend = async () => {
+    if (!title.trim()) return;
+    setSending(true);
+    setSendError(null);
+    try {
+      await db.sendPushNotification(title.trim(), body.trim());
+      setSent(true);
+      setTitle('');
+      setBody('');
+      setTimeout(() => setSent(false), 3000);
+      db.getNotificationsHistory().then(setHistory).catch(() => {});
+    } catch {
+      setSendError('Erro ao enviar. Tente novamente.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" onClick={onClose} />
+      <div className="fixed inset-0 z-[101] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex-1 overflow-y-auto px-4 pt-6 pb-32 max-w-2xl mx-auto w-full">
+
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(201,165,90,0.2)' }}>
+                <Bell className="w-5 h-5" style={{ color: '#c9a55a' }} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black tracking-tight">Notificações</h2>
+                <p className="text-xs text-white/40">Envie para todos os clientes</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Form */}
+          <div className="glass rounded-2xl p-5 mb-6">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-4">Nova Notificação</p>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs font-bold text-white/40 mb-1.5 uppercase tracking-wider">Título *</label>
+                <input
+                  value={title}
+                  onChange={e => { setTitle(e.target.value); setSendError(null); }}
+                  placeholder="Ex: Nova coleção disponível!"
+                  className="w-full px-4 py-3 glass rounded-2xl text-sm text-white placeholder-white/20 bg-transparent outline-none border border-white/10 focus:border-[#c9a55a]/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-white/40 mb-1.5 uppercase tracking-wider">Descrição</label>
+                <textarea
+                  value={body}
+                  onChange={e => { setBody(e.target.value); setSendError(null); }}
+                  placeholder="Descrição da notificação..."
+                  rows={3}
+                  className="w-full px-4 py-3 glass rounded-2xl text-sm text-white placeholder-white/20 bg-transparent outline-none border border-white/10 focus:border-[#c9a55a]/40 resize-none"
+                />
+              </div>
+              {sendError && (
+                <p className="text-red-400 text-xs font-medium flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {sendError}
+                </p>
+              )}
+              <button
+                onClick={handleSend}
+                disabled={sending || !title.trim()}
+                className="w-full h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                style={{
+                  background: sent ? 'rgba(74,222,128,0.15)' : 'rgba(201,165,90,0.15)',
+                  color: sent ? '#4ade80' : '#c9a55a',
+                  border: `1px solid ${sent ? 'rgba(74,222,128,0.2)' : 'rgba(201,165,90,0.2)'}`,
+                }}
+              >
+                {sending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin shrink-0" />
+                    Enviando...
+                  </>
+                ) : sent ? (
+                  <>
+                    <Check className="w-4 h-4 shrink-0" />
+                    Enviado com sucesso!
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 shrink-0" />
+                    Enviar Notificação
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* History */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Histórico</p>
+            {historyLoading ? (
+              <div className="text-center py-10 text-white/30 text-sm">Carregando...</div>
+            ) : history.length === 0 ? (
+              <div className="text-center py-10">
+                <Bell className="w-8 h-8 text-white/10 mx-auto mb-2" />
+                <p className="text-white/30 text-sm font-medium">Nenhuma notificação enviada</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {history.map(n => (
+                  <div key={n.id} className="glass rounded-2xl p-4">
+                    <p className="font-bold text-sm text-white">{n.title}</p>
+                    {n.body && <p className="text-xs text-white/40 mt-1 leading-relaxed">{n.body}</p>}
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-[10px] text-white/20">
+                        {n.sent_at ? new Date(n.sent_at).toLocaleString('pt-BR') : '—'}
+                      </p>
+                      {n.recipients_count != null && (
+                        <p className="text-[10px] text-white/30 font-bold">
+                          {n.recipients_count} destinatário{n.recipients_count !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ─── Dashboard Screen ─────────────────────────────────────────────────────────
+
 const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLogout: () => void, onProfileUpdate: (u: User) => void }) => {
   const isAdmin = user.role === 'admin';
   const isDemo = user.isDemo === true;
@@ -1762,10 +1927,17 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   useEffect(() => { loadData(); }, [user.id]);
   useEffect(() => { db.getSystemLogoUrl().then(setSystemLogoUrl); }, []);
 
+  // Register push subscription once per session (requests permission if not yet granted)
+  useEffect(() => {
+    const timer = setTimeout(() => { db.registerPushSubscription(); }, 2000);
+    return () => clearTimeout(timer);
+  }, [user.id]);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isClientsOpen, setIsClientsOpen] = useState(false);
   const [isSystemConfigOpen, setIsSystemConfigOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [systemLogoUrl, setSystemLogoUrl] = useState<string | null>(null);
   const [view, setView] = useState<'overview' | 'list' | 'favorites'>('overview');
 
@@ -1840,14 +2012,21 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   }, []);
 
   // Suppliers filtrados e visíveis
-  const filteredSuppliers = useMemo(() => suppliers.filter(s => {
-    if (view === 'favorites') return !!s.isFavorite;
-    const matchCat = selectedCategoryFilter === "all" || s.category === selectedCategoryFilter;
-    const codeStr = String(s.code).padStart(3, '0');
-    const q = searchQuery.toLowerCase().replace(/^#/, '');
-    const matchSearch = !searchQuery || s.name.toLowerCase().includes(q) || s.instagram?.toLowerCase().includes(q) || codeStr.includes(q);
-    return matchCat && matchSearch;
-  }), [suppliers, view, selectedCategoryFilter, searchQuery]);
+  const filteredSuppliers = useMemo(() => {
+    const list = suppliers.filter(s => {
+      if (view === 'favorites') return !!s.isFavorite;
+      const matchCat = selectedCategoryFilter === "all" || s.category === selectedCategoryFilter;
+      const codeStr = String(s.code).padStart(3, '0');
+      const q = searchQuery.toLowerCase().replace(/^#/, '');
+      const matchSearch = !searchQuery || s.name.toLowerCase().includes(q) || s.instagram?.toLowerCase().includes(q) || codeStr.includes(q);
+      return matchCat && matchSearch;
+    });
+    // Admin e conta grátis: liberados primeiro, bloqueados depois
+    if (isAdmin || isDemo) {
+      list.sort((a, b) => (b.demoAccess ? 1 : 0) - (a.demoAccess ? 1 : 0));
+    }
+    return list;
+  }, [suppliers, view, selectedCategoryFilter, searchQuery, isDemo]);
 
   const visibleSuppliers = useMemo(() => filteredSuppliers.slice(0, visibleCount), [filteredSuppliers, visibleCount]);
 
@@ -1973,13 +2152,23 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
               )}
 
               {isAdmin && (
-                <button
-                  onClick={() => { setIsSystemConfigOpen(true); setIsMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-bold text-white/60 hover:text-white text-left"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span>Configuração do Sistema</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => { setIsNotificationsOpen(true); setIsMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-bold text-white/60 hover:text-[#c9a55a] text-left"
+                  >
+                    <Bell className="w-4 h-4" />
+                    <span>Notificações</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setIsSystemConfigOpen(true); setIsMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-sm font-bold text-white/60 hover:text-white text-left"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Configuração do Sistema</span>
+                  </button>
+                </>
               )}
               <button
                 onClick={onLogout}
@@ -2191,31 +2380,30 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         }}
                         className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5 group relative overflow-hidden", isAdmin || isLocked ? "cursor-pointer" : "cursor-default")}
                       >
-                        {/* Overlay de bloqueio para conta demo */}
+                        {/* Cadeado centrado para cards bloqueados */}
                         {isLocked && (
-                          <div className="absolute inset-0 z-10 rounded-[24px] sm:rounded-[32px] flex items-center justify-end pr-4"
-                            style={{ background: 'rgba(10,13,26,0.55)', backdropFilter: 'blur(2px)' }}>
-                            <div className="w-9 h-9 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                              <svg className="w-4 h-4 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                              </svg>
-                            </div>
+                          <div className="absolute inset-0 z-10 rounded-[24px] sm:rounded-[32px] flex items-center justify-center pointer-events-none">
+                            <svg className="w-8 h-8" style={{ color: '#c9a55a', filter: 'drop-shadow(0 0 8px rgba(201,165,90,0.5))' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
                           </div>
                         )}
+
                         {/* Avatar / foto */}
                         {supplier.photoUrl ? (
                           <img src={supplier.photoUrl} alt={supplier.name}
-                            className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full object-cover shrink-0 border-2 border-white/20" />
+                            className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full object-cover shrink-0 border-2 border-white/20"
+                            style={isLocked ? { filter: 'blur(6px)' } : undefined} />
                         ) : (
                           <div className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full shrink-0 flex items-center justify-center text-xl sm:text-2xl font-black"
-                            style={{ background: 'rgba(201,165,90,0.15)', color: GOLD }}>
+                            style={{ background: 'rgba(201,165,90,0.15)', color: GOLD, ...(isLocked ? { filter: 'blur(6px)' } : {}) }}>
                             {supplier.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
                           </div>
                         )}
 
                         {/* Info */}
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1" style={isLocked ? { filter: 'blur(6px)' } : undefined}>
                           <h4 className="font-bold text-base sm:text-lg leading-tight" style={{ color: GOLD }}>{supplier.name}</h4>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
@@ -2227,7 +2415,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         </div>
 
                         {/* Ações — empilhadas verticalmente à direita */}
-                        <div className="flex flex-col items-center gap-3 shrink-0">
+                        <div className="flex flex-col items-center gap-3 shrink-0" style={isLocked ? { filter: 'blur(6px)', pointerEvents: 'none' } : undefined}>
                           <button
                             onClick={async e => { e.stopPropagation(); await db.toggleFavoriteSupplier(supplier.id, user.id, !!supplier.isFavorite); setSuppliers(await db.getSuppliersWithFavorites(user.id)); }}
                             className="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors"
@@ -2238,7 +2426,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                               fill={supplier.isFavorite ? '#ef4444' : 'none'}
                             />
                           </button>
-                          {supplier.instagram && (
+                          {supplier.instagram ? (
                             <a href={`https://instagram.com/${supplier.instagram.replace('@','')}`}
                               target="_blank" rel="noreferrer"
                               onClick={e => e.stopPropagation()}
@@ -2246,6 +2434,25 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                               style={{ background: 'rgba(201,165,90,0.12)' }}>
                               <Instagram className="w-5 h-5" style={{ color: GOLD }} />
                             </a>
+                          ) : isLocked ? (
+                            <div className="w-9 h-9 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(201,165,90,0.12)' }}>
+                              <Instagram className="w-5 h-5" style={{ color: GOLD }} />
+                            </div>
+                          ) : null}
+
+                          {/* Toggle demo access — apenas admin */}
+                          {isAdmin && (
+                            <button
+                              onClick={async e => {
+                                e.stopPropagation();
+                                await db.updateSupplier(supplier.id, { demoAccess: !supplier.demoAccess });
+                                setSuppliers(await db.getSuppliersWithFavorites(user.id));
+                              }}
+                              title={supplier.demoAccess ? 'Visível na conta grátis' : 'Oculto na conta grátis'}
+                              className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${supplier.demoAccess ? 'bg-[#c9a55a]' : 'bg-white/10'}`}
+                            >
+                              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.demoAccess ? 'left-4' : 'left-0.5'}`} />
+                            </button>
                           )}
                         </div>
                       </div>
@@ -2356,11 +2563,17 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         )}
       </>
 
-      {/* Popup fornecedor bloqueado (conta demo) */}
+      {/* Popup fornecedor bloqueado (conta grátis) */}
       {lockedPopupOpen && (
         <>
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200]" onClick={() => setLockedPopupOpen(false)} />
           <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[201] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-7 shadow-2xl text-center">
+            <button
+              onClick={() => setLockedPopupOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-red-500/15 hover:bg-red-500/30 flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4 text-red-400" />
+            </button>
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(201,165,90,0.12)' }}>
               <svg className="w-7 h-7" style={{ color: '#c9a55a' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -2369,32 +2582,26 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
             </div>
             <h3 className="text-lg font-black mb-2">Acesso bloqueado</h3>
             <p className="text-sm text-white/40 mb-7 leading-relaxed">
-              Este fornecedor não está disponível na conta demo.<br/>Libere o acesso completo para ver todos os fornecedores.
+              Este fornecedor não está disponível na conta grátis.<br/>Libere o acesso completo para ver todos os fornecedores.
             </p>
-            {upgradeUrl ? (
-              <a
-                href={upgradeUrl}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setLockedPopupOpen(false)}
-                className="block w-full h-12 btn-gradient rounded-2xl font-bold text-sm text-white flex items-center justify-center"
-              >
-                Liberar acesso completo
-              </a>
-            ) : (
-              <button
-                onClick={() => setLockedPopupOpen(false)}
-                className="w-full h-12 rounded-2xl font-bold text-sm text-white/60 glass hover:bg-white/5 transition-colors"
-              >
-                Fechar
-              </button>
-            )}
-            <button onClick={() => setLockedPopupOpen(false)} className="mt-3 text-xs text-white/20 hover:text-white/40 transition-colors">
-              Fechar
-            </button>
+            <a
+              href={upgradeUrl || 'https://wa.me/5547996077623?text=Quero%20liberar%20o%20acesso%20no%20APP!'}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setLockedPopupOpen(false)}
+              className="block w-full h-12 btn-gradient rounded-2xl font-bold text-sm text-white flex items-center justify-center uppercase tracking-wide"
+            >
+              Liberar acesso total
+            </a>
           </div>
         </>
       )}
+
+      {/* Notifications Modal — apenas admin */}
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+      />
 
       <CategorySettingsModal
         isOpen={isSettingsOpen}
@@ -2459,32 +2666,45 @@ export default function App() {
       setAuthLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // CRÍTICO: nunca fazer queries Supabase DIRETO no callback — causa deadlock.
       // O signInWithPassword retém o lock interno de auth e espera este callback
       // terminar antes de prosseguir. Se fizermos uma query aqui, ela trava esperando
       // o mesmo lock. Solução: deferir para fora do callback com setTimeout(fn, 0).
       if (session?.user) {
-        // Set imediato de fallback para tirar a tela de login
-        const fallbackUser: User = {
-          id: session.user.id,
-          name: session.user.email?.split('@')[0] ?? 'Usuário',
-          email: session.user.email ?? '',
-          color: '#c9a55a',
-          initials: (session.user.email ?? 'US').slice(0, 2).toUpperCase(),
-          role: 'client',
-        };
-        setCurrentUser(fallbackUser);
-
-        // Depois, fora do lock, busca o perfil completo
-        setTimeout(async () => {
-          try {
-            const profile = await loadUserProfile(session.user.id, session.user.email ?? '');
-            setCurrentUser(profile);
-          } catch (err) {
-            console.error('Falha ao carregar perfil:', err);
-          }
-        }, 0);
+        if (event === 'SIGNED_IN') {
+          // Login novo: mantém spinner até o perfil completo (com isDemo) estar pronto.
+          // Evita flash de cards desbloqueados antes do blur ser aplicado.
+          setAuthLoading(true);
+          setTimeout(async () => {
+            try {
+              const profile = await loadUserProfile(session.user.id, session.user.email ?? '');
+              setCurrentUser(profile);
+            } catch (err) {
+              console.error('Falha ao carregar perfil:', err);
+              setCurrentUser({
+                id: session.user.id,
+                name: session.user.email?.split('@')[0] ?? 'Usuário',
+                email: session.user.email ?? '',
+                color: '#c9a55a',
+                initials: (session.user.email ?? 'US').slice(0, 2).toUpperCase(),
+                role: 'client',
+              });
+            } finally {
+              setAuthLoading(false);
+            }
+          }, 0);
+        } else {
+          // TOKEN_REFRESHED, INITIAL_SESSION, USER_UPDATED — atualização silenciosa
+          setTimeout(async () => {
+            try {
+              const profile = await loadUserProfile(session.user.id, session.user.email ?? '');
+              setCurrentUser(profile);
+            } catch (err) {
+              console.error('Falha ao carregar perfil:', err);
+            }
+          }, 0);
+        }
       } else {
         setCurrentUser(null);
       }

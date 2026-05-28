@@ -21,6 +21,35 @@ self.addEventListener('activate', (event) => {
   self.clients.claim(); // Assume controle imediato de todas as abas
 });
 
+// ─── Push Notifications ───────────────────────────────────────────────────────
+
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {};
+  const title = data.title || 'Bras Conect';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { url: '/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ('focus' in c) return c.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('/');
+    })
+  );
+});
+
+// ─── Fetch (cache) ────────────────────────────────────────────────────────────
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 

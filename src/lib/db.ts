@@ -112,13 +112,9 @@ export async function getSuppliers(): Promise<Supplier[]> {
 }
 
 export async function getSuppliersWithFavorites(userId: string): Promise<Supplier[]> {
-  const [suppliersRes, favsRes] = await Promise.all([
-    supabase.from('suppliers').select(SUPPLIER_LIST_COLS).order('created_at', { ascending: false }),
-    supabase.from('supplier_favorites').select('supplier_id').eq('user_id', userId),
-  ]);
-  if (suppliersRes.error) throw suppliersRes.error;
-  const favIds = new Set((favsRes.data ?? []).map((f: any) => f.supplier_id));
-  return (suppliersRes.data as any[]).map(row => ({
+  const { data, error } = await supabase.rpc('get_suppliers_view', { p_user_id: userId });
+  if (error) throw error;
+  return (data as any[]).map(row => ({
     id: row.id,
     code: row.code,
     name: row.name,
@@ -126,7 +122,7 @@ export async function getSuppliersWithFavorites(userId: string): Promise<Supplie
     instagram: row.instagram,
     photoUrl: row.photo_url,
     demoAccess: row.demo_access ?? false,
-    isFavorite: favIds.has(row.id),
+    isFavorite: row.is_favorite ?? false,
     createdAt: row.created_at,
   })) as Supplier[];
 }
@@ -489,6 +485,81 @@ export async function demoRegister(name: string, email: string, phone: string): 
     type: 'email',
   });
   if (verifyError) throw verifyError;
+}
+
+// ─── Push Notifications ───────────────────────────────────────────────────────
+
+export type Notification = {
+  id: string;
+  title: string;
+  body: string;
+  sent_by: string | null;
+  recipients_count: number | null;
+  sent_at: string | null;
+};
+
+const VAPID_PUBLIC_KEY = 'BPHpXtUy54m7SnPWKN0c8Kf42JZ20Ps1Vtd_-ct6lzp8_unhUm6Cx2hVbxEKQ43nJTzu6tfMXRzJiXGlzF3xZi8';
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+function arrayBufferToBase64Url(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let str = '';
+  for (const b of bytes) str += String.fromCharCode(b);
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+export async function registerPushSubscription(): Promise<void> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    let sub = await registration.pushManager.getSubscription();
+    if (!sub) {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      sub = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    const key = sub.getKey('p256dh');
+    const auth = sub.getKey('auth');
+    if (!key || !auth) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('push_subscriptions').upsert({
+      endpoint: sub.endpoint,
+      p256dh: arrayBufferToBase64Url(key),
+      auth: arrayBufferToBase64Url(auth),
+      user_id: user?.id ?? null,
+    }, { onConflict: 'endpoint' });
+  } catch (err) {
+    console.error('Push subscription failed:', err);
+  }
+}
+
+export async function getNotificationsHistory(): Promise<Notification[]> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('id, title, body, sent_by, recipients_count, sent_at')
+    .order('sent_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []) as Notification[];
+}
+
+export async function sendPushNotification(title: string, body: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data, error } = await supabase.functions.invoke('send-push-notification', {
+    body: { title, body },
+    headers: { Authorization: `Bearer ${session?.access_token}` },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
 }
 
 // ─── App Settings (compat stub) ───────────────────────────────────────────────
