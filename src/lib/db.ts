@@ -542,6 +542,16 @@ export async function registerPushSubscription(): Promise<void> {
   }
 }
 
+export async function getLatestNotification(): Promise<Notification | null> {
+  const { data } = await supabase
+    .from('notifications')
+    .select('id, title, body, sent_by, recipients_count, sent_at')
+    .order('sent_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data as Notification | null;
+}
+
 export async function getNotificationsHistory(): Promise<Notification[]> {
   const { data, error } = await supabase
     .from('notifications')

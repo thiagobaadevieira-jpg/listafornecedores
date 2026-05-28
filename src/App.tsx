@@ -1933,11 +1933,59 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     return () => clearTimeout(timer);
   }, [user.id]);
 
+  // Carrega última notificação e verifica se há não lida (clientes)
+  useEffect(() => {
+    db.getLatestNotification().then(notif => {
+      setLatestNotification(notif);
+      if (!isAdmin && notif?.sent_at) {
+        const lastSeen = localStorage.getItem('brasconect_last_seen_notif');
+        setHasUnread(!lastSeen || new Date(notif.sent_at) > new Date(lastSeen));
+      }
+    }).catch(() => {});
+  }, [isAdmin]);
+
+  const handleBellClick = async () => {
+    if (isAdmin) {
+      setIsNotificationsOpen(true);
+      return;
+    }
+    const perm = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+    setNotifPermission(perm);
+    if (perm !== 'granted') {
+      try {
+        const newPerm = await Notification.requestPermission();
+        setNotifPermission(newPerm);
+        if (newPerm === 'granted') {
+          db.registerPushSubscription();
+          if (latestNotification) setIsNotifPopupOpen(true);
+        }
+      } catch {}
+      return;
+    }
+    setIsNotifPopupOpen(true);
+  };
+
+  const handleNotifPopupClose = () => {
+    setIsNotifPopupOpen(false);
+    if (latestNotification?.sent_at) {
+      localStorage.setItem('brasconect_last_seen_notif', latestNotification.sent_at);
+      setHasUnread(false);
+    }
+  };
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isClientsOpen, setIsClientsOpen] = useState(false);
   const [isSystemConfigOpen, setIsSystemConfigOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  // Sino de notificação
+  const [latestNotification, setLatestNotification] = useState<import('@/src/lib/db').Notification | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [isNotifPopupOpen, setIsNotifPopupOpen] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
   const [systemLogoUrl, setSystemLogoUrl] = useState<string | null>(null);
   const [view, setView] = useState<'overview' | 'list' | 'favorites'>('overview');
 
@@ -2101,7 +2149,19 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         </div>
         
         <div className="flex items-center gap-3 relative" ref={menuRef}>
-          <button 
+          {/* Sino de notificação */}
+          <button
+            type="button"
+            onClick={handleBellClick}
+            className="relative p-2.5 glass rounded-xl hover:bg-white/5 transition-colors group"
+          >
+            <Bell className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+            {!isAdmin && hasUnread && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
+            )}
+          </button>
+
+          <button
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-2.5 glass rounded-xl hover:bg-white/5 transition-colors group"
@@ -2562,6 +2622,43 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
           </>
         )}
       </>
+
+      {/* Popup de notificação (clientes) */}
+      {isNotifPopupOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200]" onClick={handleNotifPopupClose} />
+          <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[201] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-7 shadow-2xl">
+            <button
+              onClick={handleNotifPopupClose}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-red-500/15 hover:bg-red-500/30 flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4 text-red-400" />
+            </button>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(201,165,90,0.12)' }}>
+              <Bell className="w-7 h-7" style={{ color: '#c9a55a' }} />
+            </div>
+            {latestNotification ? (
+              <>
+                <h3 className="text-lg font-black mb-3 text-center" style={{ color: '#c9a55a' }}>
+                  {latestNotification.title}
+                </h3>
+                {latestNotification.body && (
+                  <p className="text-sm text-white/60 mb-5 text-center leading-relaxed">
+                    {latestNotification.body}
+                  </p>
+                )}
+                <p className="text-[10px] text-white/20 text-center">
+                  {latestNotification.sent_at
+                    ? new Date(latestNotification.sent_at).toLocaleString('pt-BR')
+                    : ''}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-white/40 text-center">Nenhuma notificação ainda.</p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Popup fornecedor bloqueado (conta grátis) */}
       {lockedPopupOpen && (
