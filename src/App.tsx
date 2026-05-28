@@ -264,6 +264,11 @@ const ClientsModal = ({
     await loadClients();
   };
 
+  const handleGrantAccess = async (id: string) => {
+    await db.grantFullAccess(id);
+    await loadClients();
+  };
+
   const handleDelete = async (id: string) => {
     await db.deleteClient(id);
     setConfirmDelete(null);
@@ -276,8 +281,9 @@ const ClientsModal = ({
     c.phone.includes(search)
   );
 
-  const activeCount = clients.filter(c => c.active).length;
+  const activeCount = clients.filter(c => c.active && !c.isDemo).length;
   const inactiveCount = clients.filter(c => !c.active).length;
+  const demoCount = clients.filter(c => c.isDemo && c.active).length;
 
   if (!isOpen) return null;
 
@@ -307,7 +313,7 @@ const ClientsModal = ({
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="grid grid-cols-3 gap-3 mb-5">
             <div className="glass rounded-2xl p-4 flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-green-500/20 flex items-center justify-center">
                 <UserCheck className="w-4 h-4 text-green-400" />
@@ -324,6 +330,15 @@ const ClientsModal = ({
               <div>
                 <p className="text-lg font-black text-red-400">{inactiveCount}</p>
                 <p className="text-[10px] text-white/40 font-medium">Inativos</p>
+              </div>
+            </div>
+            <div className="glass rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(201,165,90,0.15)' }}>
+                <UserIcon className="w-4 h-4" style={{ color: '#c9a55a' }} />
+              </div>
+              <div>
+                <p className="text-lg font-black" style={{ color: '#c9a55a' }}>{demoCount}</p>
+                <p className="text-[10px] text-white/40 font-medium">Demo</p>
               </div>
             </div>
           </div>
@@ -393,7 +408,21 @@ const ClientsModal = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                      {/* Badge Demo ou Acesso Liberado */}
+                      {c.isDemo ? (
+                        <button
+                          onClick={() => handleGrantAccess(c.id)}
+                          title="Clique para liberar acesso completo"
+                          className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#c9a55a]/15 text-[#c9a55a] hover:bg-[#c9a55a]/30 transition-colors"
+                        >
+                          Demo
+                        </button>
+                      ) : c.active && (
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-500/15 text-blue-400">
+                          Acesso liberado
+                        </span>
+                      )}
                       {/* Toggle status */}
                       <button
                         onClick={() => handleToggle(c.id)}
@@ -728,7 +757,7 @@ const ProfileModal = ({ isOpen, onClose, user, email, onSaved }: ProfileModalPro
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [step, setStep] = useState<'email' | 'password'>('email');
+  const [step, setStep] = useState<'email' | 'password' | 'register'>('email');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [systemLogoUrl, setSystemLogoUrl] = useState<string | null>(null);
@@ -737,6 +766,11 @@ const LoginScreen = () => {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Register form state
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
 
   useEffect(() => {
     db.getSystemLogoUrl().then(setSystemLogoUrl);
@@ -816,6 +850,25 @@ const LoginScreen = () => {
     }
   };
 
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regName.trim() || !regEmail.trim()) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await db.demoRegister(regName.trim(), regEmail.trim(), regPhone.trim());
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg === 'email_already_registered') {
+        setError('Este e-mail já está cadastrado. Faça login.');
+      } else {
+        setError('Erro ao criar conta. Tente novamente.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <GlassCard className="w-full max-w-md p-10 text-center rounded-[40px]" delay={0.2}>
@@ -826,7 +879,9 @@ const LoginScreen = () => {
           }
         </div>
         <h1 className="text-3xl font-bold mb-1 tracking-tighter">Bras Conect</h1>
-        <p className="text-white/30 mb-10 text-xs font-bold uppercase tracking-[0.2em]">acesse sua conta</p>
+        <p className="text-white/30 mb-10 text-xs font-bold uppercase tracking-[0.2em]">
+          {step === 'register' ? 'crie sua conta' : 'acesse sua conta'}
+        </p>
 
         {step === 'email' ? (
           <form onSubmit={handleEmailSubmit} className="space-y-5">
@@ -846,8 +901,12 @@ const LoginScreen = () => {
               className="w-full h-14 btn-gradient text-white font-bold rounded-2xl mt-4 text-lg disabled:opacity-50 disabled:pointer-events-none">
               {loading ? 'Verificando...' : 'Continuar'}
             </button>
+            <button type="button" onClick={() => { setStep('register'); setError(null); }}
+              className="w-full h-12 rounded-2xl border border-white/10 text-white/40 hover:text-white/70 hover:border-white/20 font-bold text-sm transition-all">
+              Criar conta
+            </button>
           </form>
-        ) : (
+        ) : step === 'password' ? (
           <form onSubmit={handlePasswordSubmit} className="space-y-5">
             <div className="text-left mb-2">
               <p className="text-xs text-white/40 mb-1">Entrando como</p>
@@ -872,6 +931,49 @@ const LoginScreen = () => {
             <button type="submit" disabled={loading || !password.trim()}
               className="w-full h-14 btn-gradient text-white font-bold rounded-2xl mt-4 text-lg disabled:opacity-50 disabled:pointer-events-none">
               {loading ? 'Entrando...' : 'Acessar Painel'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleRegisterSubmit} className="space-y-4">
+            <div className="space-y-2 text-left">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Nome completo *</label>
+              <input
+                type="text"
+                value={regName}
+                onChange={(e) => { setRegName(e.target.value); setError(null); }}
+                placeholder="Seu nome"
+                autoFocus
+                className="w-full h-14 glass rounded-2xl px-5 outline-none focus:border-blue-500/50 transition-colors placeholder:text-white/10"
+              />
+            </div>
+            <div className="space-y-2 text-left">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">E-mail *</label>
+              <input
+                type="email"
+                value={regEmail}
+                onChange={(e) => { setRegEmail(e.target.value); setError(null); }}
+                placeholder="seu@email.com"
+                className="w-full h-14 glass rounded-2xl px-5 outline-none focus:border-blue-500/50 transition-colors placeholder:text-white/10"
+              />
+            </div>
+            <div className="space-y-2 text-left">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Telefone com DDD</label>
+              <input
+                type="tel"
+                value={regPhone}
+                onChange={(e) => { setRegPhone(formatPhone(e.target.value)); setError(null); }}
+                placeholder="(11) 99999-9999"
+                className="w-full h-14 glass rounded-2xl px-5 outline-none focus:border-blue-500/50 transition-colors placeholder:text-white/10"
+              />
+            </div>
+            {error && <p className="text-red-400 text-xs font-bold text-left px-1">{error}</p>}
+            <button type="submit" disabled={loading || !regName.trim() || !regEmail.trim()}
+              className="w-full h-14 btn-gradient text-white font-bold rounded-2xl mt-2 text-lg disabled:opacity-50 disabled:pointer-events-none">
+              {loading ? 'Criando conta...' : 'Criar conta'}
+            </button>
+            <button type="button" onClick={() => { setStep('email'); setError(null); }}
+              className="w-full h-12 rounded-2xl border border-white/10 text-white/40 hover:text-white/70 hover:border-white/20 font-bold text-sm transition-all">
+              Já tenho conta
             </button>
           </form>
         )}
@@ -1168,7 +1270,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
   initial: Supplier | null;
   categories: { name: string; color: string }[];
   onClose: () => void;
-  onSave: (data: Omit<Supplier, 'id' | 'createdAt'>, photoFile?: File) => Promise<void>;
+  onSave: (data: Omit<Supplier, 'id' | 'createdAt' | 'code' | 'isFavorite'>, photoFile?: File) => Promise<void>;
   onDelete?: () => Promise<void>;
 }) => {
   const [name, setName] = useState(initial?.name ?? '');
@@ -1176,6 +1278,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
   const [instagram, setInstagram] = useState(initial?.instagram ?? '');
   const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? '');
   const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
+  const [demoAccess, setDemoAccess] = useState(initial?.demoAccess ?? false);
   const [saving, setSaving] = useState(false);
   const [isCatOpen, setIsCatOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1200,6 +1303,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
       category,
       instagram: instagram.trim().replace('@', '') || undefined,
       photoUrl: photoUrl || undefined,
+      demoAccess,
     }, photoFile);
     setSaving(false);
   };
@@ -1293,6 +1397,21 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
 
       </div>
 
+      {/* Toggle acesso demo */}
+      <div className="flex items-center justify-between bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3">
+        <div>
+          <p className="text-sm font-bold text-white">Acesso liberado para conta demo</p>
+          <p className="text-[11px] text-white/30 mt-0.5">Clientes demo podem ver este fornecedor</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDemoAccess(v => !v)}
+          className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${demoAccess ? 'bg-[#c9a55a]' : 'bg-white/10'}`}
+        >
+          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${demoAccess ? 'left-7' : 'left-1'}`} />
+        </button>
+      </div>
+
       <button onClick={handleSave} disabled={!name.trim() || saving}
         className="w-full h-12 btn-gradient rounded-2xl font-bold text-sm tracking-wide disabled:opacity-40 transition-opacity active:scale-[0.98]">
         {saving ? 'Salvando...' : initial ? 'Salvar Alterações' : 'Adicionar Fornecedor'}
@@ -1330,6 +1449,11 @@ const SystemConfigModal = ({
   const [videoCopied, setVideoCopied] = useState(false);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  // Upgrade URL (conta demo)
+  const [upgradeUrl, setUpgradeUrl] = useState('');
+  const [upgradeSaving, setUpgradeSaving] = useState(false);
+  const [upgradeSaved, setUpgradeSaved] = useState(false);
+
   const handleCopyVideoUrl = () => {
     if (!videoUrl) return;
     try {
@@ -1360,6 +1484,7 @@ const SystemConfigModal = ({
 
   useEffect(() => {
     db.getInstallVideoUrl().then(setVideoUrl);
+    db.getUpgradeUrl().then(setUpgradeUrl);
   }, []);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1555,6 +1680,39 @@ const SystemConfigModal = ({
               </p>
             )}
           </div>
+
+          {/* Divisor */}
+          <div className="border-t border-white/5" />
+
+          {/* Link de upgrade (conta demo) */}
+          <div>
+            <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-1">Link "Liberar Acesso Completo"</p>
+            <p className="text-[11px] text-white/20 mb-4">Aparece no popup quando um cliente demo tenta acessar um fornecedor bloqueado.</p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={upgradeUrl}
+                onChange={e => { setUpgradeUrl(e.target.value); setUpgradeSaved(false); }}
+                placeholder="https://seusite.com/comprar"
+                className="flex-1 h-12 bg-white/[0.04] border border-white/10 rounded-2xl px-4 text-sm text-white placeholder:text-white/20 outline-none focus:border-white/20 transition-colors"
+              />
+              <button
+                type="button"
+                disabled={upgradeSaving}
+                onClick={async () => {
+                  setUpgradeSaving(true);
+                  await db.setUpgradeUrl(upgradeUrl);
+                  setUpgradeSaving(false);
+                  setUpgradeSaved(true);
+                  setTimeout(() => setUpgradeSaved(false), 2000);
+                }}
+                className="h-12 px-5 rounded-2xl font-bold text-sm transition-all disabled:opacity-50"
+                style={{ background: upgradeSaved ? 'rgba(74,222,128,0.15)' : 'rgba(201,165,90,0.15)', color: upgradeSaved ? '#4ade80' : '#c9a55a' }}
+              >
+                {upgradeSaving ? '...' : upgradeSaved ? 'Salvo!' : 'Salvar'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </>
@@ -1563,6 +1721,7 @@ const SystemConfigModal = ({
 
 const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLogout: () => void, onProfileUpdate: (u: User) => void }) => {
   const isAdmin = user.role === 'admin';
+  const isDemo = user.isDemo === true;
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [banners, setBanners] = useState<import('./types').Banner[]>([]);
@@ -1571,6 +1730,8 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [lockedPopupOpen, setLockedPopupOpen] = useState(false);
+  const [upgradeUrl, setUpgradeUrlState] = useState('');
 
   const loadData = () => {
     setDataLoading(true);
@@ -1579,11 +1740,13 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       db.getSuppliersWithFavorites(user.id),
       db.getBanners(),
       db.getCategories(),
+      db.getUpgradeUrl(),
     ])
-      .then(([supps, bans, cats]) => {
+      .then(([supps, bans, cats, url]) => {
         setSuppliers(supps);
         setBanners(bans);
         setCategories(cats.length ? cats : INITIAL_CATEGORIES);
+        setUpgradeUrlState(url);
       })
       .catch((err) => {
         console.error(err);
@@ -1940,11 +2103,27 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           <button
                             key={c.name}
                             type="button"
-                            onClick={() => { setSelectedCategoryFilter(c.name); setIsCategoryFilterOpen(false); }}
-                            className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all flex items-center gap-3 ${selectedCategoryFilter === c.name ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
+                            onClick={() => {
+                              if (isDemo) return;
+                              setSelectedCategoryFilter(c.name);
+                              setIsCategoryFilterOpen(false);
+                            }}
+                            className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all flex items-center gap-3 ${
+                              isDemo
+                                ? 'text-white/30 cursor-default'
+                                : selectedCategoryFilter === c.name
+                                  ? 'bg-white/10 text-white'
+                                  : 'text-white/50 hover:bg-white/5 hover:text-white/80'
+                            }`}
                           >
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#c9a55a' }} />
-                            {c.name}
+                            <span className="flex-1">{c.name}</span>
+                            {isDemo && (
+                              <svg className="w-3.5 h-3.5 text-white/20 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                              </svg>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -1996,16 +2175,30 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                   return (<>
                   {readySuppliers.map((supplier) => {
                     const GOLD = '#c9a55a';
-                    return (
+                    const isLocked = isDemo && !supplier.demoAccess;
+                  return (
                       <div key={supplier.id}
                         onClick={async () => {
-                          if (!isAdmin) return; // clientes não abrem modal
+                          if (isLocked) { setLockedPopupOpen(true); return; }
+                          if (!isAdmin) return;
                           const detail = await db.getSupplierDetail(supplier.id);
                           setEditingSupplier(detail ?? supplier);
                           setIsSupplierModalOpen(true);
                         }}
-                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5 group", isAdmin ? "cursor-pointer" : "cursor-default")}
+                        className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5 group relative overflow-hidden", isAdmin || isLocked ? "cursor-pointer" : "cursor-default")}
                       >
+                        {/* Overlay de bloqueio para conta demo */}
+                        {isLocked && (
+                          <div className="absolute inset-0 z-10 rounded-[24px] sm:rounded-[32px] flex items-center justify-end pr-4"
+                            style={{ background: 'rgba(10,13,26,0.55)', backdropFilter: 'blur(2px)' }}>
+                            <div className="w-9 h-9 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                              <svg className="w-4 h-4 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                         {/* Avatar / foto */}
                         {supplier.photoUrl ? (
                           <img src={supplier.photoUrl} alt={supplier.name}
@@ -2159,9 +2352,49 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         )}
       </>
 
-      <CategorySettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
+      {/* Popup fornecedor bloqueado (conta demo) */}
+      {lockedPopupOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200]" onClick={() => setLockedPopupOpen(false)} />
+          <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[201] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-7 shadow-2xl text-center">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(201,165,90,0.12)' }}>
+              <svg className="w-7 h-7" style={{ color: '#c9a55a' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3 className="text-lg font-black mb-2">Acesso bloqueado</h3>
+            <p className="text-sm text-white/40 mb-7 leading-relaxed">
+              Este fornecedor não está disponível na conta demo.<br/>Libere o acesso completo para ver todos os fornecedores.
+            </p>
+            {upgradeUrl ? (
+              <a
+                href={upgradeUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setLockedPopupOpen(false)}
+                className="block w-full h-12 btn-gradient rounded-2xl font-bold text-sm text-white flex items-center justify-center"
+              >
+                Liberar acesso completo
+              </a>
+            ) : (
+              <button
+                onClick={() => setLockedPopupOpen(false)}
+                className="w-full h-12 rounded-2xl font-bold text-sm text-white/60 glass hover:bg-white/5 transition-colors"
+              >
+                Fechar
+              </button>
+            )}
+            <button onClick={() => setLockedPopupOpen(false)} className="mt-3 text-xs text-white/20 hover:text-white/40 transition-colors">
+              Fechar
+            </button>
+          </div>
+        </>
+      )}
+
+      <CategorySettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
         categories={categories}
         onAdd={handleAddCategory}
         onDelete={handleDeleteCategory}
@@ -2186,6 +2419,11 @@ export default function App() {
 
   async function loadUserProfile(userId: string, sessionEmail: string = ''): Promise<User> {
     const profile = await db.getProfile(userId);
+    let isDemo = false;
+    if (profile?.role === 'client' && sessionEmail) {
+      const client = await db.getClientByEmail(sessionEmail);
+      isDemo = client?.isDemo ?? false;
+    }
     if (profile) {
       return {
         id: profile.id,
@@ -2195,9 +2433,10 @@ export default function App() {
         initials: profile.initials || sessionEmail.slice(0, 2).toUpperCase(),
         photoUrl: profile.photo_url ?? undefined,
         role: profile.role,
+        isDemo,
       };
     }
-    return { id: userId, name: sessionEmail.split('@')[0], email: sessionEmail, color: '#c9a55a', initials: sessionEmail.slice(0, 2).toUpperCase(), role: 'client' };
+    return { id: userId, name: sessionEmail.split('@')[0], email: sessionEmail, color: '#c9a55a', initials: sessionEmail.slice(0, 2).toUpperCase(), role: 'client', isDemo };
   }
 
   useEffect(() => {

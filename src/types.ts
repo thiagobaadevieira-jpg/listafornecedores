@@ -7,6 +7,7 @@ export interface Supplier {
   photoUrl?: string;
   note?: string;
   isFavorite?: boolean;
+  demoAccess?: boolean;
   createdAt: string;
 }
 
@@ -18,6 +19,7 @@ export interface User {
   initials: string;
   photoUrl?: string;
   role: 'admin' | 'client';
+  isDemo?: boolean;
 }
 
 export interface Banner {
@@ -32,5 +34,6 @@ export interface Client {
   email: string;
   phone: string;
   active: boolean;
+  isDemo?: boolean;
   createdAt: string;
 }

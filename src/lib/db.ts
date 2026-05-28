@@ -89,8 +89,8 @@ export async function deleteCategory(id: string): Promise<void> {
 
 // ─── Suppliers ────────────────────────────────────────────────────────────────
 
-const SUPPLIER_LIST_COLS = 'id, code, name, category, instagram, photo_url, created_at';
-const SUPPLIER_DETAIL_COLS = 'id, code, name, category, instagram, photo_url, note, created_at';
+const SUPPLIER_LIST_COLS = 'id, code, name, category, instagram, photo_url, demo_access, created_at';
+const SUPPLIER_DETAIL_COLS = 'id, code, name, category, instagram, photo_url, note, demo_access, created_at';
 
 export async function getSuppliers(): Promise<Supplier[]> {
   const { data, error } = await supabase
@@ -105,6 +105,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
     category: row.category,
     instagram: row.instagram,
     photoUrl: row.photo_url,
+    demoAccess: row.demo_access ?? false,
     isFavorite: false,
     createdAt: row.created_at,
   })) as Supplier[];
@@ -124,6 +125,7 @@ export async function getSuppliersWithFavorites(userId: string): Promise<Supplie
     category: row.category,
     instagram: row.instagram,
     photoUrl: row.photo_url,
+    demoAccess: row.demo_access ?? false,
     isFavorite: favIds.has(row.id),
     createdAt: row.created_at,
   })) as Supplier[];
@@ -144,12 +146,13 @@ export async function getSupplierDetail(id: string): Promise<Supplier | null> {
     instagram: data.instagram,
     photoUrl: data.photo_url,
     note: data.note,
+    demoAccess: data.demo_access ?? false,
     isFavorite: false,
     createdAt: data.created_at,
   };
 }
 
-export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | 'isFavorite'>): Promise<Supplier> {
+export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | 'code' | 'isFavorite'>): Promise<Supplier> {
   const { data: row, error } = await supabase
     .from('suppliers')
     .insert({
@@ -158,6 +161,7 @@ export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | '
       instagram: data.instagram ?? null,
       photo_url: data.photoUrl ?? null,
       note: data.note ?? null,
+      demo_access: data.demoAccess ?? false,
     })
     .select()
     .single();
@@ -170,6 +174,7 @@ export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | '
     instagram: row.instagram,
     photoUrl: row.photo_url,
     note: row.note,
+    demoAccess: row.demo_access ?? false,
     isFavorite: false,
     createdAt: row.created_at,
   };
@@ -187,6 +192,7 @@ export async function updateSupplier(
       ...(data.instagram !== undefined && { instagram: data.instagram }),
       ...(data.photoUrl !== undefined && { photo_url: data.photoUrl }),
       ...(data.note !== undefined && { note: data.note }),
+      ...(data.demoAccess !== undefined && { demo_access: data.demoAccess }),
     })
     .eq('id', id);
   if (error) throw error;
@@ -317,6 +323,7 @@ export async function getClientByEmail(email: string): Promise<Client | null> {
     email: data.email,
     phone: data.phone ?? '',
     active: data.active,
+    isDemo: data.is_demo ?? false,
     createdAt: data.created_at,
   };
 }
@@ -333,6 +340,7 @@ export async function getClients(): Promise<Client[]> {
     email: row.email,
     phone: row.phone ?? '',
     active: row.active,
+    isDemo: row.is_demo ?? false,
     createdAt: row.created_at,
   })) as Client[];
 }
@@ -340,11 +348,11 @@ export async function getClients(): Promise<Client[]> {
 export async function createClient(data: Omit<Client, 'id' | 'createdAt'>): Promise<Client> {
   const { data: row, error } = await supabase
     .from('clients')
-    .insert({ name: data.name, email: data.email, phone: data.phone || null, active: data.active })
+    .insert({ name: data.name, email: data.email, phone: data.phone || null, active: data.active, is_demo: data.isDemo ?? false })
     .select()
     .single();
   if (error) throw error;
-  return { id: row.id, name: row.name, email: row.email, phone: row.phone ?? '', active: row.active, createdAt: row.created_at };
+  return { id: row.id, name: row.name, email: row.email, phone: row.phone ?? '', active: row.active, isDemo: row.is_demo ?? false, createdAt: row.created_at };
 }
 
 export async function updateClient(id: string, data: Partial<Omit<Client, 'id' | 'createdAt'>>): Promise<void> {
@@ -360,6 +368,11 @@ export async function deleteClient(id: string): Promise<void> {
 export async function toggleClientStatus(id: string): Promise<void> {
   const { data } = await supabase.from('clients').select('active').eq('id', id).single();
   const { error } = await supabase.from('clients').update({ active: !data?.active }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function grantFullAccess(id: string): Promise<void> {
+  const { error } = await supabase.from('clients').update({ is_demo: false }).eq('id', id);
   if (error) throw error;
 }
 
@@ -439,6 +452,42 @@ export async function uploadInstallVideo(file: File): Promise<string> {
   if (error) throw error;
   const { data } = supabase.storage.from('videos').getPublicUrl(path);
   return `${data.publicUrl}?t=${Date.now()}`;
+}
+
+// ─── Upgrade URL (conta demo → completa) ──────────────────────────────────────
+
+export async function getUpgradeUrl(): Promise<string> {
+  const { data } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'upgrade_url')
+    .single();
+  return data?.value ?? '';
+}
+
+export async function setUpgradeUrl(url: string): Promise<void> {
+  const { error } = await supabase
+    .from('system_settings')
+    .upsert({ key: 'upgrade_url', value: url });
+  if (error) throw error;
+}
+
+// ─── Demo Register ────────────────────────────────────────────────────────────
+
+export async function demoRegister(name: string, email: string, phone: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('demo-register', {
+    body: { name, email, phone },
+  });
+  if (error) throw error;
+  if (data?.error) {
+    if (data.error === 'email_already_registered') throw new Error('email_already_registered');
+    throw new Error(data.error);
+  }
+  const { error: verifyError } = await supabase.auth.verifyOtp({
+    token_hash: data.token,
+    type: 'email',
+  });
+  if (verifyError) throw verifyError;
 }
 
 // ─── App Settings (compat stub) ───────────────────────────────────────────────
