@@ -371,8 +371,9 @@ export async function toggleClientStatus(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function grantFullAccess(id: string): Promise<void> {
-  const { error } = await supabase.from('clients').update({ is_demo: false }).eq('id', id);
+export async function toggleDemoAccess(id: string): Promise<void> {
+  const { data } = await supabase.from('clients').select('is_demo').eq('id', id).single();
+  const { error } = await supabase.from('clients').update({ is_demo: !data?.is_demo }).eq('id', id);
   if (error) throw error;
 }
 

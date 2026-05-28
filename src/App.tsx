@@ -265,7 +265,7 @@ const ClientsModal = ({
   };
 
   const handleGrantAccess = async (id: string) => {
-    await db.grantFullAccess(id);
+    await db.toggleDemoAccess(id);
     await loadClients();
   };
 
@@ -409,7 +409,7 @@ const ClientsModal = ({
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                      {/* Badge Demo ou Acesso Liberado */}
+                      {/* Toggle Demo / Acesso liberado */}
                       {c.isDemo ? (
                         <button
                           onClick={() => handleGrantAccess(c.id)}
@@ -418,10 +418,14 @@ const ClientsModal = ({
                         >
                           Demo
                         </button>
-                      ) : c.active && (
-                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-500/15 text-blue-400">
+                      ) : (
+                        <button
+                          onClick={() => handleGrantAccess(c.id)}
+                          title="Clique para voltar para conta demo"
+                          className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/30 transition-colors"
+                        >
                           Acesso liberado
-                        </span>
+                        </button>
                       )}
                       {/* Toggle status */}
                       <button
