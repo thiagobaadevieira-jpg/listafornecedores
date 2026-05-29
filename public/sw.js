@@ -1,5 +1,5 @@
-const CACHE_NAME = 'controle-gastos-v2';
-// Apenas assets estáticos com hash (JS/CSS via Vite) são cacheados
+const CACHE_NAME = 'controle-gastos-v3';
+// Assets estáticos (JS/CSS via Vite) + fotos do Supabase Storage são cacheados
 // HTML NUNCA é cacheado pelo SW para garantir sempre o código mais recente
 
 self.addEventListener('install', (event) => {
@@ -50,28 +50,46 @@ self.addEventListener('notificationclick', (event) => {
 
 // ─── Fetch (cache) ────────────────────────────────────────────────────────────
 
+const SUPABASE_STORAGE = 'vguvwtqobrhhexenpvpb.supabase.co/storage';
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  const url = request.url;
 
-  // Ignora requests não-GET e requests para domínios externos (ex: Supabase API)
-  if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) {
-    return;
-  }
+  // Ignora requests não-GET
+  if (request.method !== 'GET') return;
 
   // NUNCA cacheia navegação HTML — sempre busca da rede para garantir versão atual
-  if (request.mode === 'navigate' || request.url.endsWith('.html')) {
+  if (request.mode === 'navigate' || url.endsWith('.html')) {
     event.respondWith(
       fetch(request).catch(() => caches.match('/'))
     );
     return;
   }
 
-  // Para assets com hash no nome (JS/CSS gerados pelo Vite): cache-first
-  // Esses arquivos mudam de nome a cada build, então são seguros para cachear
+  // Fotos do Supabase Storage (fornecedores, banners, avatars, logo): cache-first
+  // Cada upload gera URL única com timestamp, então novas fotos nunca estão em cache
+  if (url.includes(SUPABASE_STORAGE)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (!response || response.status !== 200) return response;
+          const toCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, toCache));
+          return response;
+        }).catch(() => {});
+      })
+    );
+    return;
+  }
+
+  // Assets estáticos locais (JS/CSS gerados pelo Vite com hash): cache-first
+  if (!url.startsWith(self.location.origin)) return;
+
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
-
       return fetch(request).then((response) => {
         if (!response || response.status !== 200 || response.type === 'opaque') {
           return response;
