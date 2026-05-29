@@ -2167,20 +2167,6 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Carregamento silencioso em segundo plano: +50 a cada 600ms até carregar tudo
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisibleCount(n => {
-        if (n >= filteredSuppliers.length) {
-          clearInterval(interval);
-          return n;
-        }
-        return n + 50;
-      });
-    }, 600);
-    return () => clearInterval(interval);
-  }, [filteredSuppliers.length]);
-
   // Suppliers filtrados e visíveis
   const filteredSuppliers = useMemo(() => {
     const list = suppliers.filter(s => {
@@ -2199,6 +2185,18 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   }, [suppliers, view, selectedCategoryFilter, searchQuery, isDemo]);
 
   const visibleSuppliers = useMemo(() => filteredSuppliers.slice(0, visibleCount), [filteredSuppliers, visibleCount]);
+
+  // Carregamento silencioso em segundo plano: +50 a cada 600ms até carregar tudo
+  useEffect(() => {
+    if (visibleCount >= filteredSuppliers.length) return;
+    const interval = setInterval(() => {
+      setVisibleCount(n => {
+        if (n >= filteredSuppliers.length) { clearInterval(interval); return n; }
+        return n + 50;
+      });
+    }, 600);
+    return () => clearInterval(interval);
+  }, [filteredSuppliers.length]);
 
   // Pré-carrega fotos em useEffect (fora do render) para evitar re-renders em cascata
   useEffect(() => {
