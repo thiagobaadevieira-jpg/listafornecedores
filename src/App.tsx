@@ -2153,7 +2153,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   }, [searchQuery, selectedCategoryFilter, view]);
 
 
-  // Track scroll para o botão de voltar ao topo
+  // Track scroll + carrega mais cards ao chegar em 20% do scroll
   const scrolledRef = useRef(false);
   useEffect(() => {
     const onScroll = () => {
@@ -2161,6 +2161,11 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       if (isScrolled !== scrolledRef.current) {
         scrolledRef.current = isScrolled;
         setScrolled(isScrolled);
+      }
+      const scrollable = document.body.scrollHeight - window.innerHeight;
+      const scrollPercent = scrollable > 0 ? window.scrollY / scrollable : 0;
+      if (scrollPercent >= 0.2) {
+        startTransition(() => setVisibleCount(n => n + 30));
       }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -2185,21 +2190,6 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   }, [suppliers, view, selectedCategoryFilter, searchQuery, isDemo]);
 
   const visibleSuppliers = useMemo(() => filteredSuppliers.slice(0, visibleCount), [filteredSuppliers, visibleCount]);
-
-  // Carregamento silencioso em segundo plano: +50 a cada 600ms até carregar tudo
-  // startTransition marca como baixa prioridade — scroll tem prioridade total
-  useEffect(() => {
-    if (visibleCount >= filteredSuppliers.length) return;
-    const interval = setInterval(() => {
-      startTransition(() => {
-        setVisibleCount(n => {
-          if (n >= filteredSuppliers.length) { clearInterval(interval); return n; }
-          return n + 50;
-        });
-      });
-    }, 600);
-    return () => clearInterval(interval);
-  }, [filteredSuppliers.length]);
 
   // Pré-carrega fotos em useEffect (fora do render) para evitar re-renders em cascata
   useEffect(() => {
