@@ -89,8 +89,8 @@ export async function deleteCategory(id: string): Promise<void> {
 
 // ─── Suppliers ────────────────────────────────────────────────────────────────
 
-const SUPPLIER_LIST_COLS = 'id, code, name, category, instagram, photo_url, demo_access, created_at';
-const SUPPLIER_DETAIL_COLS = 'id, code, name, category, instagram, photo_url, note, demo_access, created_at';
+const SUPPLIER_LIST_COLS = 'id, code, name, category, instagram, photo_url, demo_access, is_new, created_at';
+const SUPPLIER_DETAIL_COLS = 'id, code, name, category, instagram, photo_url, note, demo_access, is_new, created_at';
 
 export async function getSuppliers(): Promise<Supplier[]> {
   const { data, error } = await supabase
@@ -106,6 +106,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
     instagram: row.instagram,
     photoUrl: row.photo_url,
     demoAccess: row.demo_access ?? false,
+    isNew: row.is_new ?? false,
     isFavorite: false,
     createdAt: row.created_at,
   })) as Supplier[];
@@ -122,6 +123,7 @@ export async function getSuppliersWithFavorites(userId: string): Promise<Supplie
     instagram: row.instagram,
     photoUrl: row.photo_url,
     demoAccess: row.demo_access ?? false,
+    isNew: row.is_new ?? false,
     isFavorite: row.is_favorite ?? false,
     createdAt: row.created_at,
   })) as Supplier[];
@@ -143,6 +145,7 @@ export async function getSupplierDetail(id: string): Promise<Supplier | null> {
     photoUrl: data.photo_url,
     note: data.note,
     demoAccess: data.demo_access ?? false,
+    isNew: data.is_new ?? false,
     isFavorite: false,
     createdAt: data.created_at,
   };
@@ -158,6 +161,7 @@ export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | '
       photo_url: data.photoUrl ?? null,
       note: data.note ?? null,
       demo_access: data.demoAccess ?? false,
+      is_new: data.isNew ?? false,
     })
     .select()
     .single();
@@ -171,6 +175,7 @@ export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | '
     photoUrl: row.photo_url,
     note: row.note,
     demoAccess: row.demo_access ?? false,
+    isNew: row.is_new ?? false,
     isFavorite: false,
     createdAt: row.created_at,
   };
@@ -189,6 +194,7 @@ export async function updateSupplier(
       ...(data.photoUrl !== undefined && { photo_url: data.photoUrl }),
       ...(data.note !== undefined && { note: data.note }),
       ...(data.demoAccess !== undefined && { demo_access: data.demoAccess }),
+      ...(data.isNew !== undefined && { is_new: data.isNew }),
     })
     .eq('id', id);
   if (error) throw error;

@@ -1267,6 +1267,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
   const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? '');
   const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
   const [demoAccess, setDemoAccess] = useState(initial?.demoAccess ?? false);
+  const [isNew, setIsNew] = useState(initial?.isNew ?? false);
   const [saving, setSaving] = useState(false);
   const [isCatOpen, setIsCatOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1292,6 +1293,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
       instagram: instagram.trim().replace('@', '') || undefined,
       photoUrl: photoUrl || undefined,
       demoAccess,
+      isNew,
     }, photoFile);
     setSaving(false);
   };
@@ -1385,10 +1387,10 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
 
       </div>
 
-      {/* Toggle acesso demo */}
+      {/* Toggle Grátis */}
       <div className="flex items-center justify-between bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3">
         <div>
-          <p className="text-sm font-bold text-white">Acesso liberado para conta demo</p>
+          <p className="text-sm font-bold text-white">Grátis</p>
           <p className="text-[11px] text-white/30 mt-0.5">Clientes demo podem ver este fornecedor</p>
         </div>
         <button
@@ -1397,6 +1399,21 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
           className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${demoAccess ? 'bg-[#c9a55a]' : 'bg-white/10'}`}
         >
           <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${demoAccess ? 'left-7' : 'left-1'}`} />
+        </button>
+      </div>
+
+      {/* Toggle Novidade */}
+      <div className="flex items-center justify-between bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3">
+        <div>
+          <p className="text-sm font-bold text-white">Novidade</p>
+          <p className="text-[11px] text-white/30 mt-0.5">Exibe badge "Novidade" no card</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsNew(v => !v)}
+          className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${isNew ? 'bg-[#c9a55a]' : 'bg-white/10'}`}
+        >
+          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${isNew ? 'left-7' : 'left-1'}`} />
         </button>
       </div>
 
@@ -2424,6 +2441,22 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         }}
                         className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5 group relative overflow-hidden", isAdmin || isLocked ? "cursor-pointer" : "cursor-default")}
                       >
+                        {/* Badges Grátis / Novidade */}
+                        {(supplier.demoAccess || supplier.isNew) && !isLocked && (
+                          <div className="absolute top-2.5 left-3 flex gap-1.5 z-10">
+                            {supplier.demoAccess && (
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-[#c9a55a]/20 text-[#c9a55a] border border-[#c9a55a]/30">
+                                Grátis
+                              </span>
+                            )}
+                            {supplier.isNew && (
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30">
+                                Novidade
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {/* Cadeado centrado para cards bloqueados */}
                         {isLocked && (
                           <div className="absolute inset-0 z-10 rounded-[24px] sm:rounded-[32px] flex items-center justify-center pointer-events-none">
@@ -2484,19 +2517,36 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                             </div>
                           ) : null}
 
-                          {/* Toggle demo access — apenas admin */}
+                          {/* Toggles admin: Grátis + Novidade */}
                           {isAdmin && (
-                            <button
-                              onClick={async e => {
-                                e.stopPropagation();
-                                await db.updateSupplier(supplier.id, { demoAccess: !supplier.demoAccess });
-                                setSuppliers(await db.getSuppliersWithFavorites(user.id));
-                              }}
-                              title={supplier.demoAccess ? 'Visível na conta grátis' : 'Oculto na conta grátis'}
-                              className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${supplier.demoAccess ? 'bg-[#c9a55a]' : 'bg-white/10'}`}
-                            >
-                              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.demoAccess ? 'left-4' : 'left-0.5'}`} />
-                            </button>
+                            <div className="flex flex-col gap-1.5">
+                              <button
+                                onClick={async e => {
+                                  e.stopPropagation();
+                                  await db.updateSupplier(supplier.id, { demoAccess: !supplier.demoAccess });
+                                  setSuppliers(await db.getSuppliersWithFavorites(user.id));
+                                }}
+                                className="flex items-center gap-1.5"
+                              >
+                                <span className="text-[9px] font-black uppercase tracking-wider text-white/30 w-10 text-right">Grátis</span>
+                                <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${supplier.demoAccess ? 'bg-[#c9a55a]' : 'bg-white/10'}`}>
+                                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.demoAccess ? 'left-4' : 'left-0.5'}`} />
+                                </div>
+                              </button>
+                              <button
+                                onClick={async e => {
+                                  e.stopPropagation();
+                                  await db.updateSupplier(supplier.id, { isNew: !supplier.isNew });
+                                  setSuppliers(await db.getSuppliersWithFavorites(user.id));
+                                }}
+                                className="flex items-center gap-1.5"
+                              >
+                                <span className="text-[9px] font-black uppercase tracking-wider text-white/30 w-10 text-right">Novo</span>
+                                <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${supplier.isNew ? 'bg-green-500' : 'bg-white/10'}`}>
+                                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.isNew ? 'left-4' : 'left-0.5'}`} />
+                                </div>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>

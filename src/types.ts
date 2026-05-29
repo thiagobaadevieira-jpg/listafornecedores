@@ -8,6 +8,7 @@ export interface Supplier {
   note?: string;
   isFavorite?: boolean;
   demoAccess?: boolean;
+  isNew?: boolean;
   createdAt: string;
 }
 
