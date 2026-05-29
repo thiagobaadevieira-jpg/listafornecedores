@@ -47,6 +47,22 @@ const GlassCard = ({ children, className, delay = 0 }: GlassCardProps) => (
   </motion.div>
 );
 
+// --- Supplier Skeleton Card ---
+const SupplierSkeleton = () => (
+  <div className="interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5">
+    <div className="w-16 h-16 sm:w-[90px] sm:h-[90px] rounded-full shrink-0 skeleton-shimmer" />
+    <div className="min-w-0 flex-1 space-y-2">
+      <div className="h-4 w-32 rounded-lg skeleton-shimmer" />
+      <div className="h-3 w-20 rounded-lg skeleton-shimmer" />
+      <div className="h-3 w-12 rounded-lg skeleton-shimmer" />
+    </div>
+    <div className="flex flex-col items-center gap-3 shrink-0">
+      <div className="w-9 h-9 rounded-2xl skeleton-shimmer" />
+      <div className="w-9 h-9 rounded-2xl skeleton-shimmer" />
+    </div>
+  </div>
+);
+
 // --- Category Settings Modal ---
 
 const CategorySettingsModal = ({
@@ -2669,6 +2685,12 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                       </div>
                     );
                   })}
+                  {/* Skeletons para cards ainda não carregados */}
+                  {visibleCount < filteredSuppliers.length && (
+                    Array.from({ length: Math.min(4, filteredSuppliers.length - visibleCount) }).map((_, i) => (
+                      <SupplierSkeleton key={`sk-${i}`} />
+                    ))
+                  )}
                   </>);
                 })()}
               </div>
