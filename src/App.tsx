@@ -2094,50 +2094,6 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     setVisibleCount(20);
   }, [searchQuery, selectedCategoryFilter, view]);
 
-  // ─── Pull to Refresh ──────────────────────────────────────────────────────────
-  const [pullY, setPullY] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const touchStartY = useRef(0);
-  const isPulling = useRef(false);
-  const PULL_THRESHOLD = 80;
-
-  useEffect(() => {
-    const onTouchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0) {
-        touchStartY.current = e.touches[0].clientY;
-        isPulling.current = true;
-      }
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (!isPulling.current || isRefreshing) return;
-      const delta = e.touches[0].clientY - touchStartY.current;
-      if (delta > 0) {
-        setPullY(Math.min(delta * 0.45, PULL_THRESHOLD));
-      }
-    };
-    const onTouchEnd = async () => {
-      if (!isPulling.current) return;
-      isPulling.current = false;
-      if (pullY >= PULL_THRESHOLD) {
-        setIsRefreshing(true);
-        setPullY(PULL_THRESHOLD);
-        await new Promise<void>(resolve => {
-          loadData();
-          setTimeout(resolve, 800);
-        });
-        setIsRefreshing(false);
-      }
-      setPullY(0);
-    };
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('touchend', onTouchEnd);
-    return () => {
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-    };
-  }, [pullY, isRefreshing]);
 
   // Load more + track scroll — usa ref para evitar re-renders desnecessários
   const scrolledRef = useRef(false);
@@ -2219,22 +2175,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   }
 
   return (
-    <div className="pb-32 pt-0 min-h-screen" style={{ transform: pullY > 0 ? `translateY(${pullY}px)` : undefined, transition: pullY === 0 ? 'transform 0.3s ease' : undefined }}>
-
-      {/* Pull to refresh indicator */}
-      {pullY > 0 && (
-        <div className="fixed top-0 inset-x-0 flex items-center justify-center z-[999] pointer-events-none"
-          style={{ transform: `translateY(${pullY - 48}px)`, transition: pullY === 0 ? 'transform 0.3s ease' : undefined }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
-            style={{ background: '#c9a55a' }}>
-            {isRefreshing ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <ArrowUp className="w-5 h-5 text-white" style={{ transform: pullY >= PULL_THRESHOLD ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
-            )}
-          </div>
-        </div>
-      )}
+    <div className="pb-32 pt-0 min-h-screen">
       {/* Header */}
       <header className="fixed top-0 inset-x-0 glass border-b border-white/5 px-6 py-5 flex items-center justify-between z-[80] backdrop-blur-xl">
         <div className="flex items-center gap-3">
