@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
-import { Plus, LayoutDashboard, List, LogOut, Search, Camera, X, ChevronDown, ChevronRight, Settings, Trash2, Menu, Edit2, AlertCircle, User as UserIcon, Instagram, Store, Heart, Users, Phone, Mail, UserCheck, UserX, Check, ArrowUp, Bell, Send } from "lucide-react";
+import { Plus, LayoutDashboard, List, LogOut, Search, Camera, X, ChevronDown, ChevronRight, Settings, Trash2, Menu, Edit2, AlertCircle, User as UserIcon, Instagram, Store, Heart, Users, Phone, Mail, UserCheck, UserX, Check, ArrowUp, Bell, Send, Lock, LockOpen } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { User, Supplier, Client } from "@/src/types";
 import { supabase } from "@/src/lib/supabase";
@@ -260,13 +260,13 @@ const ClientsModal = ({
   };
 
   const handleToggle = async (id: string) => {
+    setClients(prev => prev.map(c => c.id === id ? { ...c, active: !c.active } : c));
     await db.toggleClientStatus(id);
-    await loadClients();
   };
 
   const handleGrantAccess = async (id: string) => {
+    setClients(prev => prev.map(c => c.id === id ? { ...c, isDemo: !c.isDemo } : c));
     await db.toggleDemoAccess(id);
-    await loadClients();
   };
 
   const handleDelete = async (id: string) => {
@@ -381,9 +381,13 @@ const ClientsModal = ({
           ) : (
             <div className="flex flex-col gap-3">
               {filtered.map(c => (
-                <div key={c.id} className="glass rounded-2xl p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
+                <div
+                  key={c.id}
+                  className="glass rounded-2xl p-4 cursor-pointer active:scale-[0.99] transition-transform"
+                  onClick={() => openEdit(c)}
+                >
+                  <div className="flex items-stretch justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       {/* Avatar */}
                       <div className="w-10 h-10 rounded-xl bg-[#c9a55a]/20 flex items-center justify-center flex-shrink-0">
                         <span className="text-sm font-black text-[#c9a55a]">
@@ -407,53 +411,21 @@ const ClientsModal = ({
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                      {/* Toggle Demo / Acesso liberado */}
-                      {c.isDemo ? (
-                        <button
-                          onClick={() => handleGrantAccess(c.id)}
-                          title="Clique para liberar acesso completo"
-                          className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#c9a55a]/15 text-[#c9a55a] hover:bg-[#c9a55a]/30 transition-colors"
-                        >
-                          Demo
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleGrantAccess(c.id)}
-                          title="Clique para voltar para conta demo"
-                          className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-500/15 text-blue-400 hover:bg-blue-500/30 transition-colors"
-                        >
-                          Acesso liberado
-                        </button>
-                      )}
-                      {/* Toggle status */}
-                      <button
-                        onClick={() => handleToggle(c.id)}
-                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-colors ${
-                          c.active
-                            ? 'bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400'
-                            : 'bg-red-500/20 text-red-400 hover:bg-green-500/20 hover:text-green-400'
-                        }`}
-                        title={c.active ? 'Clique para inativar' : 'Clique para ativar'}
-                      >
-                        {c.active ? 'Ativo' : 'Inativo'}
-                      </button>
-
-                      <button
-                        onClick={() => openEdit(c)}
-                        className="p-1.5 rounded-xl hover:bg-white/5 text-white/30 hover:text-white transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={() => setConfirmDelete(c)}
-                        className="p-1.5 rounded-xl hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    {/* Cadeado demo */}
+                    <button
+                      onClick={e => { e.stopPropagation(); handleGrantAccess(c.id); }}
+                      title={c.isDemo ? 'Acesso demo — clique para liberar acesso completo' : 'Acesso completo — clique para voltar ao demo'}
+                      className={`self-stretch flex items-center justify-center w-14 rounded-xl transition-colors flex-shrink-0 ${
+                        c.isDemo
+                          ? 'bg-red-500/15 hover:bg-red-500/25 text-red-400'
+                          : 'bg-green-500/15 hover:bg-green-500/25 text-green-400'
+                      }`}
+                    >
+                      {c.isDemo
+                        ? <Lock className="w-7 h-7" />
+                        : <LockOpen className="w-7 h-7" />
+                      }
+                    </button>
                   </div>
 
                   <p className="text-[10px] text-white/20 mt-3">
@@ -537,6 +509,17 @@ const ClientsModal = ({
               >
                 {formLoading ? 'Salvando...' : editingClient ? 'Salvar Alterações' : 'Cadastrar Cliente'}
               </button>
+
+              {editingClient && (
+                <button
+                  type="button"
+                  onClick={() => { setIsFormOpen(false); setConfirmDelete(editingClient); }}
+                  className="w-full h-11 rounded-2xl font-bold text-sm text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir Cliente
+                </button>
+              )}
             </div>
           </div>
         </>
@@ -1093,7 +1076,8 @@ const BannerGrid = ({ banners }: { banners: import('./types').Banner[] }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         onClick={() => { if (first.link) window.open(first.link, '_blank', 'noreferrer'); }}
-        className={cn("w-full relative aspect-video overflow-hidden rounded-[20px]", first.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : '')}
+        className={cn("w-full relative overflow-hidden rounded-[20px]", first.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : '')}
+        style={{ aspectRatio: '8/9' }}
       >
         <img src={first.photoUrl} alt="banner 1" className="w-full h-full object-cover" />
       </motion.div>
@@ -2303,7 +2287,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery("")}
-                        className="text-xs font-bold text-white/40 hover:text-white transition-colors uppercase tracking-widest pl-2 shrink-0"
+                        className="text-xs font-bold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg shrink-0"
                       >
                         Limpar
                       </button>
