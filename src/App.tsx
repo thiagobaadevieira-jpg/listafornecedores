@@ -2113,6 +2113,34 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   );
   const [systemLogoUrl, setSystemLogoUrl] = useState<string | null>(null);
   const [view, setView] = useState<'overview' | 'list' | 'favorites'>('overview');
+  const VIEWS: Array<'overview' | 'list' | 'favorites'> = ['overview', 'list', 'favorites'];
+
+  // Swipe horizontal para trocar de view
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      setView(current => {
+        const idx = VIEWS.indexOf(current);
+        if (dx < 0 && idx < VIEWS.length - 1) return VIEWS[idx + 1];
+        if (dx > 0 && idx > 0) return VIEWS[idx - 1];
+        return current;
+      });
+    };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
 
   const handleAddCategory = async (name: string) => {
     if (categories.find(c => c.name.toLowerCase() === name.toLowerCase())) return;
