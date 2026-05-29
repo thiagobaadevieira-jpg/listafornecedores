@@ -2985,6 +2985,12 @@ export default function App() {
     let isDemo = false;
     if (profile?.role === 'client' && sessionEmail) {
       const client = await db.getClientByEmail(sessionEmail);
+      if (!client) {
+        // Cliente foi excluído — forçar logout
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        throw new Error('client_deleted');
+      }
       isDemo = client?.isDemo ?? false;
     }
     if (profile) {
