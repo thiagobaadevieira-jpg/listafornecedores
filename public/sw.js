@@ -1,4 +1,4 @@
-const CACHE_NAME = 'controle-gastos-v3';
+const CACHE_NAME = 'controle-gastos-v4';
 // Assets estáticos (JS/CSS via Vite) + fotos do Supabase Storage são cacheados
 // HTML NUNCA é cacheado pelo SW para garantir sempre o código mais recente
 
