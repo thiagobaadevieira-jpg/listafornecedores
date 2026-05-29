@@ -1374,7 +1374,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIsCatOpen(false)} />
                 <div className="absolute left-0 right-0 mt-2 bg-[#161929] border border-white/10 rounded-2xl shadow-2xl z-20 flex flex-col">
-                  <div className="p-1.5 flex flex-col gap-0.5 max-h-64 overflow-y-auto overscroll-contain">
+                  <div className="p-1.5 flex flex-col gap-0.5 max-h-[200px] overflow-y-auto overscroll-contain">
                     {categories.map(c => {
                       const selected = selectedCategories.includes(c.name);
                       return (
