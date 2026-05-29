@@ -1393,6 +1393,16 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
                       </button>
                     );
                   })}
+                  <div className="pt-1 px-1 pb-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsCatOpen(false)}
+                      className="w-full h-9 rounded-xl bg-green-500 hover:bg-green-600 text-white text-xs font-black flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Confirmar
+                    </button>
+                  </div>
                 </div>
               </>
             )}
