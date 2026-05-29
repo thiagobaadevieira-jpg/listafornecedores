@@ -780,20 +780,33 @@ const LoginScreen = () => {
     tempVideo.playsInline = true;
     tempVideo.muted = true;
 
-    // Timeout de segurança: abre após 6s mesmo sem carregar completamente
+    // Timeout de segurança: abre após 4s mesmo sem carregar completamente
     const timeout = setTimeout(() => {
+      cleanup();
       setVideoLoading(false);
       setIsVideoModalOpen(true);
-    }, 6000);
+    }, 4000);
 
+    let opened = false;
     const open = () => {
-      clearTimeout(timeout);
+      if (opened) return;
+      opened = true;
+      cleanup();
       setVideoLoading(false);
       setIsVideoModalOpen(true);
     };
 
-    tempVideo.addEventListener('loadeddata', open, { once: true });
-    tempVideo.addEventListener('error', open, { once: true });
+    const cleanup = () => {
+      clearTimeout(timeout);
+      ['loadeddata', 'canplay', 'canplaythrough', 'loadedmetadata', 'error'].forEach(ev => {
+        tempVideo.removeEventListener(ev, open);
+      });
+    };
+
+    // Safari iOS dispara canplay/canplaythrough em vez de loadeddata
+    ['loadeddata', 'canplay', 'canplaythrough', 'loadedmetadata', 'error'].forEach(ev => {
+      tempVideo.addEventListener(ev, open, { once: true });
+    });
     tempVideo.load();
   };
 
