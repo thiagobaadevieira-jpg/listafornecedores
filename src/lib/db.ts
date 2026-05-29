@@ -568,6 +568,11 @@ export async function getNotificationsHistory(): Promise<Notification[]> {
   return (data ?? []) as Notification[];
 }
 
+export async function deleteNotification(id: string): Promise<void> {
+  const { error } = await supabase.from('notifications').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function sendPushNotification(title: string, body: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   const { data, error } = await supabase.functions.invoke('send-push-notification', {

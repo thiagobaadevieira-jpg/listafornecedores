@@ -1740,6 +1740,7 @@ const NotificationsModal = ({
   const [sendError, setSendError] = useState<string | null>(null);
   const [history, setHistory] = useState<import('@/src/lib/db').Notification[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [confirmDeleteNotif, setConfirmDeleteNotif] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1772,8 +1773,8 @@ const NotificationsModal = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" onClick={onClose} />
-      <div className="fixed inset-0 z-[101] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" onClick={onClose} />
+      <div className="fixed inset-0 z-[101] flex flex-col bg-[#0d0f1a]" onClick={e => e.stopPropagation()}>
         <div className="flex-1 overflow-y-auto px-4 pt-6 pb-32 max-w-2xl mx-auto w-full">
 
           {/* Header */}
@@ -1864,8 +1865,18 @@ const NotificationsModal = ({
               <div className="flex flex-col gap-2">
                 {history.map(n => (
                   <div key={n.id} className="glass rounded-2xl p-4">
-                    <p className="font-bold text-sm text-white">{n.title}</p>
-                    {n.body && <p className="text-xs text-white/40 mt-1 leading-relaxed">{n.body}</p>}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-sm text-white">{n.title}</p>
+                        {n.body && <p className="text-xs text-white/40 mt-1 leading-relaxed">{n.body}</p>}
+                      </div>
+                      <button
+                        onClick={() => setConfirmDeleteNotif(n.id)}
+                        className="p-1.5 rounded-xl hover:bg-red-500/15 text-white/20 hover:text-red-400 transition-colors shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-[10px] text-white/20">
                         {n.sent_at ? new Date(n.sent_at).toLocaleString('pt-BR') : '—'}
@@ -1883,6 +1894,38 @@ const NotificationsModal = ({
           </div>
         </div>
       </div>
+
+      {/* Confirm delete notification */}
+      {confirmDeleteNotif && (
+        <>
+          <div className="fixed inset-0 bg-black/70 z-[120]" onClick={() => setConfirmDeleteNotif(null)} />
+          <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[121] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-400" />
+            </div>
+            <h3 className="font-black text-lg mb-2">Excluir notificação?</h3>
+            <p className="text-sm text-white/50 mb-6">Esta ação não pode ser desfeita.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteNotif(null)}
+                className="flex-1 h-11 rounded-2xl font-bold text-sm text-white/60 glass hover:bg-white/5 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  await db.deleteNotification(confirmDeleteNotif);
+                  setHistory(prev => prev.filter(x => x.id !== confirmDeleteNotif));
+                  setConfirmDeleteNotif(null);
+                }}
+                className="flex-1 h-11 rounded-2xl font-bold text-sm text-white bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };
@@ -2476,7 +2519,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           </p>
                           {(supplier.demoAccess || supplier.isNew) && !isLocked && (
                             <div className="flex gap-1.5 mt-2">
-                              {supplier.demoAccess && (
+                              {supplier.demoAccess && (isAdmin || isDemo) && (
                                 <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-[#c9a55a]/20 text-[#c9a55a] border border-[#c9a55a]/30">
                                   Grátis
                                 </span>
@@ -2518,18 +2561,19 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
 
                           {/* Toggles admin: Grátis + Novidade */}
                           {isAdmin && (
-                            <div className="flex flex-col gap-1.5">
+                            <div className="flex flex-col items-center gap-1.5">
                               <button
                                 onClick={async e => {
                                   e.stopPropagation();
                                   await db.updateSupplier(supplier.id, { demoAccess: !supplier.demoAccess });
                                   setSuppliers(await db.getSuppliersWithFavorites(user.id));
                                 }}
-                                className="flex items-center gap-1.5"
+                                className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-colors"
+                                style={{ background: supplier.demoAccess ? 'rgba(201,165,90,0.12)' : 'rgba(255,255,255,0.05)' }}
                               >
-                                <span className="text-[9px] font-black uppercase tracking-wider text-white/30 w-10 text-right">Grátis</span>
-                                <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${supplier.demoAccess ? 'bg-[#c9a55a]' : 'bg-white/10'}`}>
-                                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.demoAccess ? 'left-4' : 'left-0.5'}`} />
+                                <span className="text-[8px] font-black uppercase tracking-wider" style={{ color: supplier.demoAccess ? '#c9a55a' : 'rgba(255,255,255,0.2)' }}>Grátis</span>
+                                <div className={`relative w-12 h-6 rounded-full transition-colors ${supplier.demoAccess ? 'bg-[#c9a55a]' : 'bg-white/20'}`}>
+                                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.demoAccess ? 'left-7' : 'left-1'}`} />
                                 </div>
                               </button>
                               <button
@@ -2538,11 +2582,12 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                                   await db.updateSupplier(supplier.id, { isNew: !supplier.isNew });
                                   setSuppliers(await db.getSuppliersWithFavorites(user.id));
                                 }}
-                                className="flex items-center gap-1.5"
+                                className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-colors"
+                                style={{ background: supplier.isNew ? 'rgba(74,222,128,0.12)' : 'rgba(255,255,255,0.05)' }}
                               >
-                                <span className="text-[9px] font-black uppercase tracking-wider text-white/30 w-10 text-right">Novo</span>
-                                <div className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${supplier.isNew ? 'bg-green-500' : 'bg-white/10'}`}>
-                                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.isNew ? 'left-4' : 'left-0.5'}`} />
+                                <span className="text-[8px] font-black uppercase tracking-wider" style={{ color: supplier.isNew ? '#4ade80' : 'rgba(255,255,255,0.2)' }}>Novo</span>
+                                <div className={`relative w-12 h-6 rounded-full transition-colors ${supplier.isNew ? 'bg-green-400' : 'bg-white/20'}`}>
+                                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${supplier.isNew ? 'left-7' : 'left-1'}`} />
                                 </div>
                               </button>
                             </div>
