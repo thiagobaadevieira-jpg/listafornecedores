@@ -1275,7 +1275,9 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
   onDelete?: () => Promise<void>;
 }) => {
   const [name, setName] = useState(initial?.name ?? '');
-  const [category, setCategory] = useState(initial?.category ?? (categories[0]?.name ?? ''));
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initial?.categories?.length ? initial.categories : (initial?.category ? [initial.category] : [])
+  );
   const [instagram, setInstagram] = useState(initial?.instagram ?? '');
   const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? '');
   const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
@@ -1302,7 +1304,8 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
     setSaving(true);
     await onSave({
       name: name.trim(),
-      category,
+      category: selectedCategories[0] ?? '',
+      categories: selectedCategories,
       instagram: instagram.trim().replace('@', '') || undefined,
       photoUrl: photoUrl || undefined,
       demoAccess,
@@ -1355,38 +1358,35 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
         </div>
 
         <div>
-          <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5 block">Categoria</label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsCatOpen(v => !v)}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3 text-sm text-left flex items-center justify-between outline-none focus:border-white/20 transition-colors"
-            >
-              <span className={category ? 'text-white' : 'text-white/20'}>
-                {category || 'Selecione a categoria'}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-white/30 transition-transform duration-200 ${isCatOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isCatOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setIsCatOpen(false)} />
-                <div className="absolute left-0 right-0 mt-2 p-1.5 bg-[#161929] border border-white/10 rounded-2xl shadow-2xl z-20 flex flex-col gap-0.5 max-h-52 overflow-y-auto">
-                  {categories.map(c => (
-                    <button
-                      key={c.name}
-                      type="button"
-                      onClick={() => { setCategory(c.name); setIsCatOpen(false); }}
-                      className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-all flex items-center gap-3 ${category === c.name ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
-                    >
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+          <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5 block">
+            Categorias <span className="text-white/20 normal-case font-medium">(selecione uma ou mais)</span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {categories.map(c => {
+              const selected = selectedCategories.includes(c.name);
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => setSelectedCategories(prev =>
+                    selected ? prev.filter(x => x !== c.name) : [...prev, c.name]
+                  )}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    selected
+                      ? 'text-white border-transparent'
+                      : 'text-white/40 border-white/10 bg-white/[0.03] hover:bg-white/5'
+                  }`}
+                  style={selected ? { background: `${c.color}30`, borderColor: `${c.color}60`, color: c.color } : {}}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: selected ? c.color : 'rgba(255,255,255,0.2)' }} />
+                  {c.name}
+                </button>
+              );
+            })}
           </div>
+          {selectedCategories.length === 0 && (
+            <p className="text-[11px] text-red-400/70 mt-1.5">Selecione ao menos uma categoria</p>
+          )}
         </div>
 
         <div>
@@ -2129,7 +2129,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const filteredSuppliers = useMemo(() => {
     const list = suppliers.filter(s => {
       if (view === 'favorites') return !!s.isFavorite;
-      const matchCat = selectedCategoryFilter === "all" || s.category === selectedCategoryFilter;
+      const matchCat = selectedCategoryFilter === "all" || (s.categories ?? [s.category]).includes(selectedCategoryFilter);
       const codeStr = String(s.code).padStart(3, '0');
       const q = searchQuery.toLowerCase().replace(/^#/, '');
       const matchSearch = !searchQuery || s.name.toLowerCase().includes(q) || s.instagram?.toLowerCase().includes(q) || codeStr.includes(q);
@@ -2532,9 +2532,13 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         {/* Info */}
                         <div className="min-w-0 flex-1" style={isLocked ? { filter: 'blur(6px)' } : undefined}>
                           <h4 className="font-bold text-base sm:text-lg leading-tight" style={{ color: GOLD }}>{supplier.name}</h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                            <p className="text-xs text-white/40 font-black uppercase tracking-widest">{supplier.category}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(supplier.categories ?? [supplier.category]).map((cat, i) => (
+                              <span key={i} className="text-[10px] text-white/40 font-black uppercase tracking-widest flex items-center gap-1">
+                                {i > 0 && <span className="text-white/20">·</span>}
+                                {cat}
+                              </span>
+                            ))}
                           </div>
                           <p className="text-[10px] font-bold mt-1.5" style={{ color: 'rgba(201,165,90,0.45)' }}>
                             #{String(supplier.code).padStart(3, '0')}

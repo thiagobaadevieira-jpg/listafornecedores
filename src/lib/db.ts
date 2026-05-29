@@ -89,8 +89,8 @@ export async function deleteCategory(id: string): Promise<void> {
 
 // ─── Suppliers ────────────────────────────────────────────────────────────────
 
-const SUPPLIER_LIST_COLS = 'id, code, name, category, instagram, photo_url, demo_access, is_new, created_at';
-const SUPPLIER_DETAIL_COLS = 'id, code, name, category, instagram, photo_url, note, demo_access, is_new, created_at';
+const SUPPLIER_LIST_COLS = 'id, code, name, category, categories, instagram, photo_url, demo_access, is_new, created_at';
+const SUPPLIER_DETAIL_COLS = 'id, code, name, category, categories, instagram, photo_url, note, demo_access, is_new, created_at';
 
 export async function getSuppliers(): Promise<Supplier[]> {
   const { data, error } = await supabase
@@ -108,6 +108,7 @@ export async function getSuppliers(): Promise<Supplier[]> {
     demoAccess: row.demo_access ?? false,
     isNew: row.is_new ?? false,
     isFavorite: false,
+    categories: row.categories ?? [row.category],
     createdAt: row.created_at,
   })) as Supplier[];
 }
@@ -125,6 +126,7 @@ export async function getSuppliersWithFavorites(userId: string): Promise<Supplie
     demoAccess: row.demo_access ?? false,
     isNew: row.is_new ?? false,
     isFavorite: row.is_favorite ?? false,
+    categories: row.categories ?? [row.category],
     createdAt: row.created_at,
   })) as Supplier[];
 }
@@ -147,6 +149,7 @@ export async function getSupplierDetail(id: string): Promise<Supplier | null> {
     demoAccess: data.demo_access ?? false,
     isNew: data.is_new ?? false,
     isFavorite: false,
+    categories: data.categories ?? [data.category],
     createdAt: data.created_at,
   };
 }
@@ -156,7 +159,8 @@ export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | '
     .from('suppliers')
     .insert({
       name: data.name,
-      category: data.category,
+      category: data.categories?.[0] ?? data.category,
+      categories: data.categories ?? [data.category],
       instagram: data.instagram ?? null,
       photo_url: data.photoUrl ?? null,
       note: data.note ?? null,
@@ -195,6 +199,7 @@ export async function updateSupplier(
       ...(data.note !== undefined && { note: data.note }),
       ...(data.demoAccess !== undefined && { demo_access: data.demoAccess }),
       ...(data.isNew !== undefined && { is_new: data.isNew }),
+      ...(data.categories !== undefined && { categories: data.categories, category: data.categories[0] ?? '' }),
     })
     .eq('id', id);
   if (error) throw error;

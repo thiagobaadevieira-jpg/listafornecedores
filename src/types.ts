@@ -3,6 +3,7 @@ export interface Supplier {
   code: number;
   name: string;
   category: string;
+  categories?: string[];
   instagram?: string;
   photoUrl?: string;
   note?: string;
