@@ -298,12 +298,13 @@ async function convertToWebP(file: File): Promise<File> {
 }
 
 export async function uploadBannerPhoto(file: File): Promise<string> {
-  // Preserva o formato original (AVIF, WebP, JPG, etc.)
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'webp';
+  // Supabase não suporta AVIF — converte para WebP antes de enviar
+  const uploadFile = file.type === 'image/avif' ? await convertToWebP(file) : file;
+  const ext = uploadFile.name.split('.').pop()?.toLowerCase() ?? 'webp';
   const path = `${Date.now()}.${ext}`;
   const { error } = await supabase.storage
     .from('banners')
-    .upload(path, file, { upsert: true, contentType: file.type });
+    .upload(path, uploadFile, { upsert: true, contentType: uploadFile.type });
   if (error) throw error;
   const { data } = supabase.storage.from('banners').getPublicUrl(path);
   return data.publicUrl;
