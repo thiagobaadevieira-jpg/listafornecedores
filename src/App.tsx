@@ -1105,7 +1105,7 @@ const BannerGrid = ({ banners }: { banners: import('./types').Banner[] }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         onClick={() => { if (first.link) window.open(first.link, '_blank', 'noreferrer'); }}
-        className={cn("w-full relative overflow-hidden rounded-[20px]", first.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : '')}
+        className={cn("w-full relative overflow-hidden", first.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : '')}
         style={{ aspectRatio: '8/9' }}
       >
         <img src={first.photoUrl} alt="banner 1" className="w-full h-full object-cover" />
