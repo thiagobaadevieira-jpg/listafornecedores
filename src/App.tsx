@@ -2095,7 +2095,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   }, [searchQuery, selectedCategoryFilter, view]);
 
 
-  // Load more + track scroll — usa ref para evitar re-renders desnecessários
+  // Load more + track scroll — carrega +30 quando chegar em 20% do scroll atual
   const scrolledRef = useRef(false);
   useEffect(() => {
     const onScroll = () => {
@@ -2104,8 +2104,9 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         scrolledRef.current = isScrolled;
         setScrolled(isScrolled);
       }
-      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 400;
-      if (nearBottom) setVisibleCount(n => n + 20);
+      const scrollable = document.body.scrollHeight - window.innerHeight;
+      const scrollPercent = scrollable > 0 ? window.scrollY / scrollable : 0;
+      if (scrollPercent >= 0.2) setVisibleCount(n => n + 30);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
