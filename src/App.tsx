@@ -1314,7 +1314,7 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
     setSaving(false);
   };
 
-  const avatarColor = categories.find(c => c.name === category)?.color ?? '#94a3b8';
+  const avatarColor = categories.find(c => c.name === selectedCategories[0])?.color ?? '#94a3b8';
 
   return (
     <div className="space-y-5">
