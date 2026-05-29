@@ -1373,27 +1373,29 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
             {isCatOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIsCatOpen(false)} />
-                <div className="absolute left-0 right-0 mt-2 p-1.5 bg-[#161929] border border-white/10 rounded-2xl shadow-2xl z-20 flex flex-col gap-0.5 max-h-52 overflow-y-auto">
-                  {categories.map(c => {
-                    const selected = selectedCategories.includes(c.name);
-                    return (
-                      <button
-                        key={c.name}
-                        type="button"
-                        onClick={() => setSelectedCategories(prev =>
-                          selected ? prev.filter(x => x !== c.name) : [...prev, c.name]
-                        )}
-                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-all flex items-center justify-between gap-3 ${selected ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                          {c.name}
-                        </div>
-                        {selected && <Check className="w-3.5 h-3.5 text-[#c9a55a] shrink-0" />}
-                      </button>
-                    );
-                  })}
-                  <div className="pt-1 px-1 pb-1">
+                <div className="absolute left-0 right-0 mt-2 bg-[#161929] border border-white/10 rounded-2xl shadow-2xl z-20 flex flex-col">
+                  <div className="p-1.5 flex flex-col gap-0.5 max-h-48 overflow-y-auto">
+                    {categories.map(c => {
+                      const selected = selectedCategories.includes(c.name);
+                      return (
+                        <button
+                          key={c.name}
+                          type="button"
+                          onClick={() => setSelectedCategories(prev =>
+                            selected ? prev.filter(x => x !== c.name) : [...prev, c.name]
+                          )}
+                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-all flex items-center justify-between gap-3 ${selected ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                            {c.name}
+                          </div>
+                          {selected && <Check className="w-3.5 h-3.5 text-[#c9a55a] shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="p-1.5 border-t border-white/5">
                     <button
                       type="button"
                       onClick={() => setIsCatOpen(false)}
