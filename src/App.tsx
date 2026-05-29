@@ -1995,6 +1995,10 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     }
     const perm = typeof Notification !== 'undefined' ? Notification.permission : 'default';
     setNotifPermission(perm);
+    if (perm === 'denied') {
+      setIsNotifPopupOpen(true);
+      return;
+    }
     if (perm !== 'granted') {
       try {
         const newPerm = await Notification.requestPermission();
@@ -2002,6 +2006,8 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         if (newPerm === 'granted') {
           db.registerPushSubscription();
           if (latestNotification) setIsNotifPopupOpen(true);
+        } else if (newPerm === 'denied') {
+          setIsNotifPopupOpen(true);
         }
       } catch {}
       return;
@@ -2027,6 +2033,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const [latestNotification, setLatestNotification] = useState<import('@/src/lib/db').Notification | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
   const [isNotifPopupOpen, setIsNotifPopupOpen] = useState(false);
+  const [isNotifDeniedPopupOpen, setIsNotifDeniedPopupOpen] = useState(false);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -2700,6 +2707,35 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
           </>
         )}
       </>
+
+      {/* Popup permissão negada */}
+      {isNotifDeniedPopupOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200]" onClick={() => setIsNotifDeniedPopupOpen(false)} />
+          <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[201] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-7 shadow-2xl">
+            <button onClick={() => setIsNotifDeniedPopupOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+              <X className="w-4 h-4 text-white/40" />
+            </button>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 bg-red-500/15">
+              <Bell className="w-7 h-7 text-red-400" />
+            </div>
+            <h3 className="text-lg font-black mb-2 text-center text-white">Notificações bloqueadas</h3>
+            <p className="text-sm text-white/50 text-center leading-relaxed mb-5">
+              Você bloqueou as notificações. Para recebê-las, ative manualmente:
+            </p>
+            <div className="bg-white/5 rounded-2xl p-4 text-sm text-white/60 leading-relaxed space-y-1">
+              <p>📱 <span className="font-bold text-white/80">iPhone:</span> Ajustes → Safari → Notificações → Bras Conect → Permitir</p>
+            </div>
+            <button
+              onClick={() => setIsNotifDeniedPopupOpen(false)}
+              className="w-full h-11 rounded-2xl font-bold text-sm text-white mt-5 bg-[#c9a55a] hover:bg-[#b8924a] transition-colors"
+            >
+              Entendi
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Popup de notificação (clientes) */}
       {isNotifPopupOpen && (
