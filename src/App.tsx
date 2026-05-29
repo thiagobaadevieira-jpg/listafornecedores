@@ -2642,7 +2642,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       {scrolled && (
         <button
           onClick={() => window.scrollTo(0, 0)}
-          className={cn("fixed right-8 w-11 h-11 rounded-full glass border border-white/10 flex items-center justify-center shadow-lg z-[90] active:scale-95 transition-all", isAdmin ? "bottom-[11rem]" : "bottom-[7rem]")}
+          className={cn("fixed right-8 w-11 h-11 rounded-full glass border border-white/10 flex items-center justify-center shadow-lg z-[90] active:scale-95 transition-all", isAdmin ? "bottom-[15.5rem]" : "bottom-[7rem]")}
         >
           <ArrowUp className="w-5 h-5 text-white/60" />
         </button>
@@ -2673,6 +2673,19 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
           style={{ background: 'rgba(201,165,90,0.9)' }}
         >
           <Users className="w-6 h-6 text-white" />
+        </motion.button>
+      )}
+
+      {/* Notificações FAB — apenas admin */}
+      {isAdmin && (
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsNotificationsOpen(true)}
+          className="fixed bottom-[11.5rem] right-8 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_24px_-4px_rgba(201,165,90,0.4)] z-[90] active:scale-95 transition-all"
+          style={{ background: 'rgba(201,165,90,0.75)' }}
+        >
+          <Bell className="w-6 h-6 text-white" />
         </motion.button>
       )}
 
