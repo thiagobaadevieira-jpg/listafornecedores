@@ -1358,32 +1358,65 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
         </div>
 
         <div>
-          <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5 block">
-            Categorias <span className="text-white/20 normal-case font-medium">(selecione uma ou mais)</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {categories.map(c => {
-              const selected = selectedCategories.includes(c.name);
-              return (
-                <button
-                  key={c.name}
-                  type="button"
-                  onClick={() => setSelectedCategories(prev =>
-                    selected ? prev.filter(x => x !== c.name) : [...prev, c.name]
-                  )}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                    selected
-                      ? 'text-white border-transparent'
-                      : 'text-white/40 border-white/10 bg-white/[0.03] hover:bg-white/5'
-                  }`}
-                  style={selected ? { background: `${c.color}30`, borderColor: `${c.color}60`, color: c.color } : {}}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: selected ? c.color : 'rgba(255,255,255,0.2)' }} />
-                  {c.name}
-                </button>
-              );
-            })}
+          <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1.5 block">Categorias</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsCatOpen(v => !v)}
+              className="w-full bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-3 text-sm text-left flex items-center justify-between outline-none focus:border-white/20 transition-colors"
+            >
+              <span className={selectedCategories.length > 0 ? 'text-white' : 'text-white/20'}>
+                {selectedCategories.length > 0 ? `${selectedCategories.length} categoria${selectedCategories.length > 1 ? 's' : ''} selecionada${selectedCategories.length > 1 ? 's' : ''}` : 'Selecione as categorias'}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-white/30 transition-transform duration-200 ${isCatOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isCatOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setIsCatOpen(false)} />
+                <div className="absolute left-0 right-0 mt-2 p-1.5 bg-[#161929] border border-white/10 rounded-2xl shadow-2xl z-20 flex flex-col gap-0.5 max-h-52 overflow-y-auto">
+                  {categories.map(c => {
+                    const selected = selectedCategories.includes(c.name);
+                    return (
+                      <button
+                        key={c.name}
+                        type="button"
+                        onClick={() => setSelectedCategories(prev =>
+                          selected ? prev.filter(x => x !== c.name) : [...prev, c.name]
+                        )}
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-all flex items-center justify-between gap-3 ${selected ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                          {c.name}
+                        </div>
+                        {selected && <Check className="w-3.5 h-3.5 text-[#c9a55a] shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
+          {/* Chips das categorias selecionadas */}
+          {selectedCategories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {selectedCategories.map(name => {
+                const cat = categories.find(c => c.name === name);
+                return (
+                  <span
+                    key={name}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                    style={{ background: `${cat?.color ?? '#94a3b8'}25`, color: cat?.color ?? '#94a3b8', border: `1px solid ${cat?.color ?? '#94a3b8'}40` }}
+                  >
+                    {name}
+                    <button type="button" onClick={() => setSelectedCategories(prev => prev.filter(x => x !== name))} className="ml-0.5 opacity-60 hover:opacity-100">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
           {selectedCategories.length === 0 && (
             <p className="text-[11px] text-red-400/70 mt-1.5">Selecione ao menos uma categoria</p>
           )}
