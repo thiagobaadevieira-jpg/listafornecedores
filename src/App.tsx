@@ -887,7 +887,7 @@ const LoginScreen = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <GlassCard className="w-full max-w-md p-10 text-center rounded-[40px]" delay={0.2}>
+      <div className="glass-card w-full max-w-md p-10 text-center rounded-[40px]">
         <div className="w-20 h-20 bg-black border border-white/10 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-8 shadow-lg select-none">
           {systemLogoUrl
             ? <img src={systemLogoUrl} alt="Logo" className="w-full h-full object-cover" />
@@ -1021,7 +1021,7 @@ const LoginScreen = () => {
             </>
           )}
         </button>
-      </GlassCard>
+      </div>
 
       {/* Modal de vídeo de instalação */}
       {isVideoModalOpen && installVideoUrl && (
