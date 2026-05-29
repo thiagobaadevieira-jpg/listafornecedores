@@ -796,16 +796,18 @@ const LoginScreen = () => {
     tempVideo.playsInline = true;
     tempVideo.muted = true;
 
-    // Timeout de segurança: abre após 4s mesmo sem carregar completamente
+    // Timeout de segurança: abre após 6s mesmo sem carregar completamente
     const timeout = setTimeout(() => {
       cleanup();
       setVideoLoading(false);
       setIsVideoModalOpen(true);
-    }, 4000);
+    }, 6000);
 
     let opened = false;
     const open = () => {
       if (opened) return;
+      // Garante que o primeiro frame está renderizado
+      if (tempVideo.readyState < 3) return;
       opened = true;
       cleanup();
       setVideoLoading(false);
@@ -814,14 +816,14 @@ const LoginScreen = () => {
 
     const cleanup = () => {
       clearTimeout(timeout);
-      ['loadeddata', 'canplay', 'canplaythrough', 'loadedmetadata', 'error'].forEach(ev => {
+      ['loadeddata', 'canplaythrough', 'error'].forEach(ev => {
         tempVideo.removeEventListener(ev, open);
       });
     };
 
-    // Safari iOS dispara canplay/canplaythrough em vez de loadeddata
-    ['loadeddata', 'canplay', 'canplaythrough', 'loadedmetadata', 'error'].forEach(ev => {
-      tempVideo.addEventListener(ev, open, { once: true });
+    // Só abre quando readyState >= 3 (HAVE_FUTURE_DATA — frame pronto)
+    ['loadeddata', 'canplaythrough', 'error'].forEach(ev => {
+      tempVideo.addEventListener(ev, open);
     });
     tempVideo.load();
   };
