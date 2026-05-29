@@ -891,10 +891,9 @@ const LoginScreen = () => {
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="glass-card w-full max-w-md p-10 text-center rounded-[40px]">
         <div className="w-20 h-20 bg-black border border-white/10 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-8 shadow-lg select-none">
-          {systemLogoUrl
-            ? <img src={systemLogoUrl} alt="Logo" className="w-full h-full object-cover" />
-            : <Store className="w-10 h-10 text-[#c9a55a] stroke-[2]" />
-          }
+          {systemLogoUrl && (
+            <img src={systemLogoUrl} alt="Logo" className="w-full h-full object-cover" />
+          )}
         </div>
         <h1 className="text-3xl font-bold mb-1 tracking-tighter">Bras Conect</h1>
         <p className="text-white/30 mb-10 text-xs font-bold uppercase tracking-[0.2em]">
@@ -2284,19 +2283,8 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       <header className="fixed top-0 inset-x-0 glass border-b border-white/5 px-6 py-5 flex items-center justify-between z-[80] backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shadow-lg select-none" style={{ background: '#151c2c' }}>
-            {systemLogoUrl ? (
+            {systemLogoUrl && (
               <img src={systemLogoUrl} alt="Logo" className="w-full h-full object-cover" />
-            ) : (
-              <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="hgold" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#e8c97a" />
-                    <stop offset="100%" stopColor="#a07830" />
-                  </linearGradient>
-                </defs>
-                <path d="M17 18 Q17 10 24 10 Q31 10 31 18" stroke="url(#hgold)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-                <text x="7" y="44" fontFamily="Georgia,serif" fontWeight="900" fontSize="40" fill="url(#hgold)">B</text>
-              </svg>
             )}
           </div>
           <div>
