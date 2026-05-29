@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useLayoutEffect, startTransition } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { Plus, LayoutDashboard, List, LogOut, Search, Camera, X, ChevronDown, ChevronRight, Settings, Trash2, Menu, Edit2, AlertCircle, User as UserIcon, Instagram, Store, Heart, Users, Phone, Mail, UserCheck, UserX, Check, ArrowUp, Bell, Send, Lock, LockOpen } from "lucide-react";
 import { cn } from "@/src/lib/utils";
@@ -2187,12 +2187,15 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const visibleSuppliers = useMemo(() => filteredSuppliers.slice(0, visibleCount), [filteredSuppliers, visibleCount]);
 
   // Carregamento silencioso em segundo plano: +50 a cada 600ms até carregar tudo
+  // startTransition marca como baixa prioridade — scroll tem prioridade total
   useEffect(() => {
     if (visibleCount >= filteredSuppliers.length) return;
     const interval = setInterval(() => {
-      setVisibleCount(n => {
-        if (n >= filteredSuppliers.length) { clearInterval(interval); return n; }
-        return n + 50;
+      startTransition(() => {
+        setVisibleCount(n => {
+          if (n >= filteredSuppliers.length) { clearInterval(interval); return n; }
+          return n + 50;
+        });
       });
     }, 600);
     return () => clearInterval(interval);
