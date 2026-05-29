@@ -2143,17 +2143,17 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [visibleCount, setVisibleCount] = useState(30);
   const [scrolled, setScrolled] = useState(false);
   const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
 
   // Reset visibleCount when filter/search/view changes
   useEffect(() => {
-    setVisibleCount(20);
+    setVisibleCount(30);
   }, [searchQuery, selectedCategoryFilter, view]);
 
 
-  // Load more + track scroll — carrega +30 quando chegar em 20% do scroll atual
+  // Track scroll para o botão de voltar ao topo
   const scrolledRef = useRef(false);
   useEffect(() => {
     const onScroll = () => {
@@ -2162,13 +2162,24 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         scrolledRef.current = isScrolled;
         setScrolled(isScrolled);
       }
-      const scrollable = document.body.scrollHeight - window.innerHeight;
-      const scrollPercent = scrollable > 0 ? window.scrollY / scrollable : 0;
-      if (scrollPercent >= 0.2) setVisibleCount(n => n + 30);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Carregamento silencioso em segundo plano: +50 a cada 600ms até carregar tudo
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisibleCount(n => {
+        if (n >= filteredSuppliers.length) {
+          clearInterval(interval);
+          return n;
+        }
+        return n + 50;
+      });
+    }, 600);
+    return () => clearInterval(interval);
+  }, [filteredSuppliers.length]);
 
   // Suppliers filtrados e visíveis
   const filteredSuppliers = useMemo(() => {
