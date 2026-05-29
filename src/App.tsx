@@ -103,9 +103,9 @@ const CategorySettingsModal = ({
                   setEditingCatName(null);
                   onClose();
                 }} 
-                className="p-3 glass rounded-2xl hover:bg-white/5 transition-colors"
+                className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors"
               >
-                <X className="w-5 h-5 text-white/40" />
+                <X className="w-5 h-5 text-red-400" />
               </button>
             </div>
 
@@ -307,8 +307,8 @@ const ClientsModal = ({
                 <p className="text-xs text-white/40">{clients.length} cadastrado{clients.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+              <X className="w-5 h-5 text-red-400" />
             </button>
           </div>
 
@@ -445,8 +445,8 @@ const ClientsModal = ({
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[111] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-black">{editingClient ? 'Editar Cliente' : 'Novo Cliente'}</h3>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 rounded-xl hover:bg-white/5 text-white/40">
-                <X className="w-4 h-4" />
+              <button onClick={() => setIsFormOpen(false)} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+                <X className="w-5 h-5 text-red-400" />
               </button>
             </div>
 
@@ -674,8 +674,8 @@ const ProfileModal = ({ isOpen, onClose, user, email, onSaved }: ProfileModalPro
           <div className="fixed inset-4 m-auto max-w-sm h-fit max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none bg-[#161929]/90 backdrop-blur-2xl rounded-[32px] sm:rounded-[40px] p-6 sm:p-8 z-[201] border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black tracking-tight">Meu Perfil</h2>
-              <button onClick={onClose} className="p-3 glass rounded-2xl hover:bg-white/5 transition-colors">
-                <X className="w-5 h-5 text-white/40" />
+              <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+                <X className="w-5 h-5 text-red-400" />
               </button>
             </div>
 
@@ -1027,9 +1027,9 @@ const LoginScreen = () => {
               </div>
               <button
                 onClick={handleVideoModalClose}
-                className="p-1.5 rounded-xl hover:bg-white/5 text-white/30 hover:text-white transition-colors"
+                className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5 text-red-400" />
               </button>
             </div>
 
@@ -1183,8 +1183,8 @@ const BannerSettingsModal = ({ isOpen, onClose, banners, onRefresh }: {
           <div className="fixed inset-4 m-auto max-w-sm h-fit max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none bg-[#161929]/90 backdrop-blur-2xl rounded-[32px] p-6 z-[201] border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black tracking-tight">Banners</h2>
-              <button onClick={onClose} className="p-2.5 glass rounded-2xl hover:bg-white/5 transition-colors">
-                <X className="w-4 h-4 text-white/40" />
+              <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+                <X className="w-5 h-5 text-red-400" />
               </button>
             </div>
 
@@ -1317,8 +1317,8 @@ const SupplierForm = ({ initial, categories, onClose, onSave, onDelete }: {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-black tracking-tight">{initial ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
-        <button onClick={onClose} className="p-2.5 glass rounded-2xl hover:bg-white/5 transition-colors">
-          <X className="w-4 h-4 text-white/40" />
+        <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+          <X className="w-5 h-5 text-red-400" />
         </button>
       </div>
 
@@ -1562,8 +1562,8 @@ const SystemConfigModal = ({
       <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[111] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-black">Configuração do Sistema</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
-            <X className="w-4 h-4 text-white/40" />
+          <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+            <X className="w-5 h-5 text-red-400" />
           </button>
         </div>
 
@@ -1801,8 +1801,8 @@ const NotificationsModal = ({
                 <p className="text-xs text-white/40">Envie para todos os clientes</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-colors">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+              <X className="w-5 h-5 text-red-400" />
             </button>
           </div>
 
