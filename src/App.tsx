@@ -293,7 +293,7 @@ const ClientsModal = ({
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed inset-0 z-[101] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="fixed inset-0 z-[101] flex flex-col bg-[#0d0f1a]" onClick={e => e.stopPropagation()}>
         <div className="flex-1 overflow-y-auto px-4 pt-6 pb-32 max-w-2xl mx-auto w-full">
 
           {/* Header */}
