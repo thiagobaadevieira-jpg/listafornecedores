@@ -2661,8 +2661,11 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           </button>
                           {supplier.instagram ? (
                             <a href={`https://instagram.com/${supplier.instagram.replace('@','')}`}
-                              target="_blank" rel="noreferrer"
-                              onClick={e => e.stopPropagation()}
+                              onClick={e => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                window.location.href = `https://instagram.com/${supplier.instagram!.replace('@','')}`;
+                              }}
                               className="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors"
                               style={{ background: 'rgba(201,165,90,0.12)' }}>
                               <Instagram className="w-5 h-5" style={{ color: GOLD }} />
