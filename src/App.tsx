@@ -215,6 +215,7 @@ const ClientsModal = ({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'demo'>('demo');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Client | null>(null);
@@ -291,11 +292,14 @@ const ClientsModal = ({
     await loadClients();
   };
 
-  const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search)
-  );
+  const filtered = clients.filter(c => {
+    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search);
+    const matchStatus = statusFilter === 'all'
+      || (statusFilter === 'active' && c.active && !c.isDemo)
+      || (statusFilter === 'inactive' && !c.active)
+      || (statusFilter === 'demo' && c.isDemo && c.active);
+    return matchSearch && matchStatus;
+  });
 
   const activeCount = clients.filter(c => c.active && !c.isDemo).length;
   const inactiveCount = clients.filter(c => !c.active).length;
@@ -328,35 +332,46 @@ const ClientsModal = ({
             </button>
           </div>
 
-          {/* Stats */}
+          {/* Stats / Filtro */}
+          <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 ml-1">Selecione o filtro clicando no card abaixo</p>
           <div className="grid grid-cols-3 gap-3 mb-5">
-            <div className="glass rounded-2xl p-4 flex items-center gap-3">
+            <button
+              onClick={() => setStatusFilter(f => f === 'active' ? 'all' : 'active')}
+              className={`glass rounded-2xl p-4 flex items-center gap-3 transition-all ${statusFilter === 'active' ? 'border border-green-500/50 shadow-[0_0_10px_rgba(74,222,128,0.15)]' : 'border border-transparent'}`}
+            >
               <div className="w-8 h-8 rounded-xl bg-green-500/20 flex items-center justify-center">
                 <UserCheck className="w-4 h-4 text-green-400" />
               </div>
-              <div>
+              <div className="text-left">
                 <p className="text-lg font-black text-green-400">{activeCount}</p>
                 <p className="text-[10px] text-white/40 font-medium">Ativos</p>
               </div>
-            </div>
-            <div className="glass rounded-2xl p-4 flex items-center gap-3">
+            </button>
+            <button
+              onClick={() => setStatusFilter(f => f === 'inactive' ? 'all' : 'inactive')}
+              className={`glass rounded-2xl p-4 flex items-center gap-3 transition-all ${statusFilter === 'inactive' ? 'border border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.15)]' : 'border border-transparent'}`}
+            >
               <div className="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center">
                 <UserX className="w-4 h-4 text-red-400" />
               </div>
-              <div>
+              <div className="text-left">
                 <p className="text-lg font-black text-red-400">{inactiveCount}</p>
                 <p className="text-[10px] text-white/40 font-medium">Inativos</p>
               </div>
-            </div>
-            <div className="glass rounded-2xl p-4 flex items-center gap-3">
+            </button>
+            <button
+              onClick={() => setStatusFilter(f => f === 'demo' ? 'all' : 'demo')}
+              className={`glass rounded-2xl p-4 flex items-center gap-3 transition-all ${statusFilter === 'demo' ? 'border shadow-[0_0_10px_rgba(201,165,90,0.15)]' : 'border border-transparent'}`}
+              style={statusFilter === 'demo' ? { borderColor: 'rgba(201,165,90,0.5)' } : {}}
+            >
               <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(201,165,90,0.15)' }}>
                 <UserIcon className="w-4 h-4" style={{ color: '#c9a55a' }} />
               </div>
-              <div>
+              <div className="text-left">
                 <p className="text-lg font-black" style={{ color: '#c9a55a' }}>{demoCount}</p>
                 <p className="text-[10px] text-white/40 font-medium">Demo</p>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Search + Add */}
