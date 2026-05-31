@@ -2607,6 +2607,15 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5 group relative overflow-hidden", isAdmin || isLocked ? "cursor-pointer" : "cursor-default")}
                       >
 
+                        {/* Badge Novidade visível mesmo em cards bloqueados */}
+                        {isLocked && supplier.isNew && (
+                          <div className="absolute top-3 left-3 z-20">
+                            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30">
+                              Novidade
+                            </span>
+                          </div>
+                        )}
+
                         {/* Cadeado centrado para cards bloqueados */}
                         {isLocked && (
                           <div className="absolute inset-0 z-10 rounded-[24px] sm:rounded-[32px] flex items-center justify-center pointer-events-none">
@@ -2643,9 +2652,9 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           <p className="text-[10px] font-bold mt-1.5" style={{ color: 'rgba(201,165,90,0.45)' }}>
                             #{String(supplier.code).padStart(3, '0')}
                           </p>
-                          {(supplier.demoAccess || supplier.isNew) && !isLocked && (
+                          {(supplier.demoAccess || supplier.isNew) && (
                             <div className="flex gap-1.5 mt-2">
-                              {supplier.demoAccess && (isAdmin || isDemo) && (
+                              {supplier.demoAccess && !isLocked && (isAdmin || isDemo) && (
                                 <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-[#c9a55a]/20 text-[#c9a55a] border border-[#c9a55a]/30">
                                   Grátis
                                 </span>
