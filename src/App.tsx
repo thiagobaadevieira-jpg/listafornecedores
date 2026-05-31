@@ -2676,7 +2676,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
 
                         {/* Badge NOVO FORNECEDOR visível mesmo em cards bloqueados */}
                         {isLocked && supplier.isNew && (
-                          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none" style={{ paddingTop: '6rem' }}>
+                          <div className="absolute inset-0 z-20 flex items-end justify-center pointer-events-none pb-3">
                             <span className="animate-pulse text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-xl bg-green-500/25 text-green-400 border border-green-500/40 shadow-[0_0_15px_rgba(74,222,128,0.3)]">
                               Novo Fornecedor
                             </span>
