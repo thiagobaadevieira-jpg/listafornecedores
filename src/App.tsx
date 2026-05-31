@@ -890,11 +890,11 @@ const LoginScreen = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="glass-card w-full max-w-md p-10 text-center rounded-[40px]">
-        <div className="w-20 h-20 bg-black border border-white/10 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-8 shadow-lg select-none">
-          {systemLogoUrl && (
-            <img src={systemLogoUrl} alt="Logo" className="w-full h-full object-cover" />
-          )}
-        </div>
+        {(systemLogoUrl || localStorage.getItem('brasconect_logo_url')) && (
+          <div className="w-20 h-20 bg-black border border-white/10 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-8 shadow-lg select-none">
+            <img src={systemLogoUrl || localStorage.getItem('brasconect_logo_url') || ''} alt="Logo" className="w-full h-full object-cover" />
+          </div>
+        )}
         <h1 className="text-3xl font-bold mb-1 tracking-tighter">Bras Conect</h1>
         <p className="text-white/30 mb-10 text-xs font-bold uppercase tracking-[0.2em]">
           {step === 'register' ? 'crie sua conta' : 'acesse sua conta'}
