@@ -2607,11 +2607,11 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         className={cn("interactive-glass rounded-[24px] sm:rounded-[32px] pt-3 pr-3 pl-3 pb-5 sm:p-7 flex items-center gap-3 sm:gap-5 group relative overflow-hidden", isAdmin || isLocked ? "cursor-pointer" : "cursor-default")}
                       >
 
-                        {/* Badge Novidade visível mesmo em cards bloqueados */}
+                        {/* Badge NOVO FORNECEDOR visível mesmo em cards bloqueados */}
                         {isLocked && supplier.isNew && (
-                          <div className="absolute top-3 left-3 z-20">
-                            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30">
-                              Novidade
+                          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none" style={{ paddingBottom: '2.5rem' }}>
+                            <span className="animate-pulse text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-xl bg-green-500/25 text-green-400 border border-green-500/40 shadow-[0_0_15px_rgba(74,222,128,0.3)]">
+                              Novo Fornecedor
                             </span>
                           </div>
                         )}
