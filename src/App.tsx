@@ -1822,12 +1822,15 @@ const NotificationsModal = ({
 }) => {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [history, setHistory] = useState<import('@/src/lib/db').Notification[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [confirmDeleteNotif, setConfirmDeleteNotif] = useState<string | null>(null);
+  const notifFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1843,10 +1846,11 @@ const NotificationsModal = ({
     setSending(true);
     setSendError(null);
     try {
-      await db.sendPushNotification(title.trim(), body.trim());
+      await db.sendPushNotification(title.trim(), body.trim(), photoUrl || undefined);
       setSent(true);
       setTitle('');
       setBody('');
+      setPhotoUrl('');
       setTimeout(() => setSent(false), 3000);
       db.getNotificationsHistory().then(setHistory).catch(() => {});
     } catch {
@@ -1884,6 +1888,49 @@ const NotificationsModal = ({
           <div className="glass rounded-2xl p-5 mb-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-4">Nova Notificação</p>
             <div className="flex flex-col gap-3">
+              {/* Upload foto (4:5) */}
+              <div>
+                <label className="block text-xs font-bold text-white/40 mb-1.5 uppercase tracking-wider">Foto do popup (4:5)</label>
+                <button type="button" onClick={() => notifFileRef.current?.click()} disabled={uploading}
+                  className="relative w-full overflow-hidden border-2 border-dashed border-white/15 hover:border-white/30 transition-colors flex items-center justify-center rounded-2xl"
+                  style={{ aspectRatio: '4/5', background: photoUrl ? 'transparent' : 'rgba(255,255,255,0.03)' }}>
+                  {uploading ? (
+                    <><div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" /><span className="text-xs text-white/30 font-bold ml-2">Enviando...</span></>
+                  ) : photoUrl ? (
+                    <img src={photoUrl} alt="preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Camera className="w-6 h-6 text-white/20" />
+                      <span className="text-xs text-white/30 font-bold">Clique para adicionar foto</span>
+                      <span className="text-[10px] text-white/15">Opcional — aparece no popup do cliente</span>
+                    </div>
+                  )}
+                </button>
+                {photoUrl && (
+                  <button type="button" onClick={() => setPhotoUrl('')}
+                    className="text-[10px] font-bold text-red-400 hover:text-red-300 mt-1.5 ml-1">
+                    Remover foto
+                  </button>
+                )}
+                <input ref={notifFileRef} type="file" accept="image/*,image/avif,.avif" className="hidden"
+                  onChange={async e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 8 * 1024 * 1024) { setSendError('Imagem muito grande. Máximo 8 MB.'); return; }
+                    setUploading(true);
+                    setSendError(null);
+                    try {
+                      const url = await db.uploadNotificationPhoto(file);
+                      setPhotoUrl(url);
+                    } catch (err: unknown) {
+                      setSendError(`Erro ao enviar: ${err instanceof Error ? err.message : String(err)}`);
+                    } finally {
+                      setUploading(false);
+                      if (notifFileRef.current) notifFileRef.current.value = '';
+                    }
+                  }}
+                />
+              </div>
               <div>
                 <label className="block text-xs font-bold text-white/40 mb-1.5 uppercase tracking-wider">Título *</label>
                 <input
@@ -2087,12 +2134,17 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   }, [user.id]);
 
   // Carrega última notificação e verifica se há não lida (clientes)
+  // Se tem foto e não foi lida, abre o popup automaticamente
   useEffect(() => {
     db.getLatestNotification().then(notif => {
       setLatestNotification(notif);
       if (!isAdmin && notif?.sent_at) {
         const lastSeen = localStorage.getItem('brasconect_last_seen_notif');
-        setHasUnread(!lastSeen || new Date(notif.sent_at) > new Date(lastSeen));
+        const isUnread = !lastSeen || new Date(notif.sent_at) > new Date(lastSeen);
+        setHasUnread(isUnread);
+        if (isUnread && notif.photo_url) {
+          setIsNotifPopupOpen(true);
+        }
       }
     }).catch(() => {});
   }, [isAdmin]);
@@ -2920,35 +2972,47 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       {/* Popup de notificação (clientes) */}
       {isNotifPopupOpen && (
         <>
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200]" onClick={handleNotifPopupClose} />
-          <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[201] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-7 shadow-2xl">
-            <button
-              onClick={handleNotifPopupClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-red-500/15 hover:bg-red-500/30 flex items-center justify-center transition-colors"
-            >
-              <X className="w-4 h-4 text-red-400" />
-            </button>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(201,165,90,0.12)' }}>
-              <Bell className="w-7 h-7" style={{ color: '#c9a55a' }} />
-            </div>
-            {latestNotification ? (
-              <>
-                <h3 className="text-lg font-black mb-3 text-center" style={{ color: '#c9a55a' }}>
-                  {latestNotification.title}
-                </h3>
-                {latestNotification.body && (
-                  <p className="text-sm text-white/60 mb-5 text-center leading-relaxed">
-                    {latestNotification.body}
-                  </p>
-                )}
-                <p className="text-[10px] text-white/20 text-center">
-                  {latestNotification.sent_at
-                    ? new Date(latestNotification.sent_at).toLocaleString('pt-BR')
-                    : ''}
-                </p>
-              </>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200]" onClick={handleNotifPopupClose} />
+          <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[201] max-w-sm mx-auto">
+            {latestNotification?.photo_url ? (
+              <div className="relative">
+                <button
+                  onClick={handleNotifPopupClose}
+                  className="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-red-500/90 hover:bg-red-500 flex items-center justify-center transition-colors z-10 shadow-lg"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+                <img
+                  src={latestNotification.photo_url}
+                  alt="Novidade"
+                  className="w-full rounded-3xl shadow-2xl"
+                  style={{ aspectRatio: '4/5', objectFit: 'cover' }}
+                />
+              </div>
             ) : (
-              <p className="text-sm text-white/40 text-center">Nenhuma notificação ainda.</p>
+              <div className="bg-[#161929] border border-white/10 rounded-3xl p-7 shadow-2xl">
+                <button
+                  onClick={handleNotifPopupClose}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5 text-red-400" />
+                </button>
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(201,165,90,0.12)' }}>
+                  <Bell className="w-7 h-7" style={{ color: '#c9a55a' }} />
+                </div>
+                {latestNotification ? (
+                  <>
+                    <h3 className="text-lg font-black mb-3 text-center" style={{ color: '#c9a55a' }}>
+                      {latestNotification.title}
+                    </h3>
+                    {latestNotification.body && (
+                      <p className="text-sm text-white/60 mb-5 text-center leading-relaxed">{latestNotification.body}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-white/40 text-center">Nenhuma notificação ainda.</p>
+                )}
+              </div>
             )}
           </div>
         </>

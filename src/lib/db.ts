@@ -504,6 +504,7 @@ export type Notification = {
   id: string;
   title: string;
   body: string;
+  photo_url: string | null;
   sent_by: string | null;
   recipients_count: number | null;
   sent_at: string | null;
@@ -556,7 +557,7 @@ export async function registerPushSubscription(): Promise<void> {
 export async function getLatestNotification(): Promise<Notification | null> {
   const { data } = await supabase
     .from('notifications')
-    .select('id, title, body, sent_by, recipients_count, sent_at')
+    .select('id, title, body, photo_url, sent_by, recipients_count, sent_at')
     .order('sent_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -566,7 +567,7 @@ export async function getLatestNotification(): Promise<Notification | null> {
 export async function getNotificationsHistory(): Promise<Notification[]> {
   const { data, error } = await supabase
     .from('notifications')
-    .select('id, title, body, sent_by, recipients_count, sent_at')
+    .select('id, title, body, photo_url, sent_by, recipients_count, sent_at')
     .order('sent_at', { ascending: false })
     .limit(50);
   if (error) throw error;
@@ -578,10 +579,22 @@ export async function deleteNotification(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function sendPushNotification(title: string, body: string): Promise<void> {
+export async function uploadNotificationPhoto(file: File): Promise<string> {
+  const uploadFile = file.type === 'image/avif' ? await convertToWebP(file) : file;
+  const ext = uploadFile.name.split('.').pop()?.toLowerCase() ?? 'webp';
+  const path = `${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('notifications')
+    .upload(path, uploadFile, { upsert: true, contentType: uploadFile.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from('notifications').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function sendPushNotification(title: string, body: string, photoUrl?: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   const { data, error } = await supabase.functions.invoke('send-push-notification', {
-    body: { title, body },
+    body: { title, body, photoUrl: photoUrl ?? null },
     headers: { Authorization: `Bearer ${session?.access_token}` },
   });
   if (error) throw error;
