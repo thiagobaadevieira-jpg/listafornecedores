@@ -11,9 +11,30 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
   </head>
   <body>
+    <div id="splash" style="position:fixed;inset:0;background:#0a0d1a;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s">
+      <div style="text-align:center">
+        <div id="splash-logo" style="width:64px;height:64px;border-radius:50%;background:#151c2c;margin:0 auto 16px;overflow:hidden;display:flex;align-items:center;justify-content:center"></div>
+        <p style="color:rgba(255,255,255,0.3);font-size:10px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;font-family:system-ui">Bras Conect</p>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Splash: tenta carregar logo do cache
+      try {
+        var cachedLogo = localStorage.getItem('brasconect_logo_url');
+        if (cachedLogo) {
+          var img = document.createElement('img');
+          img.src = cachedLogo;
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+          document.getElementById('splash-logo').appendChild(img);
+        }
+      } catch(e) {}
+      // Remove splash quando React montar
+      window.__removeSplash = function() {
+        var s = document.getElementById('splash');
+        if (s) { s.style.opacity = '0'; setTimeout(function() { s.remove(); }, 300); }
+      };
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')

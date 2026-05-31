@@ -2019,7 +2019,20 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const [upgradeUrl, setUpgradeUrlState] = useState('');
 
   const loadData = () => {
-    setDataLoading(true);
+    // Tenta carregar do cache primeiro (instantâneo)
+    try {
+      const cached = localStorage.getItem('brasconect_data');
+      if (cached) {
+        const { supps, bans, cats, url } = JSON.parse(cached);
+        if (supps?.length) setSuppliers(supps);
+        if (bans?.length) setBanners(bans);
+        if (cats?.length) setCategories(cats);
+        if (url) setUpgradeUrlState(url);
+        setDataLoading(false);
+      }
+    } catch {}
+
+    // Busca dados atualizados do servidor (em segundo plano)
     setDataError(null);
     Promise.all([
       db.getSuppliersWithFavorites(user.id),
@@ -2030,18 +2043,27 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       .then(([supps, bans, cats, url]) => {
         setSuppliers(supps);
         setBanners(bans);
-        setCategories(cats.length ? cats : INITIAL_CATEGORIES);
+        const finalCats = cats.length ? cats : INITIAL_CATEGORIES;
+        setCategories(finalCats);
         setUpgradeUrlState(url);
+        // Salva no cache para próxima abertura
+        try { localStorage.setItem('brasconect_data', JSON.stringify({ supps, bans, cats: finalCats, url })); } catch {}
       })
       .catch((err) => {
         console.error(err);
-        setDataError('Não foi possível carregar os dados. Verifique sua conexão.');
+        if (!suppliers.length) setDataError('Não foi possível carregar os dados. Verifique sua conexão.');
       })
       .finally(() => setDataLoading(false));
   };
 
   useEffect(() => { loadData(); }, [user.id]);
-  useEffect(() => { db.getSystemLogoUrl().then(setSystemLogoUrl); }, []);
+  useEffect(() => {
+    db.getSystemLogoUrl().then(url => {
+      setSystemLogoUrl(url);
+      // Salva logo no cache para o splash screen
+      try { if (url) localStorage.setItem('brasconect_logo_url', url); } catch {}
+    });
+  }, []);
 
   // Register push subscription once per session (requests permission if not yet granted)
   useEffect(() => {
@@ -3064,12 +3086,15 @@ export default function App() {
     return () => { clearTimeout(timeout); subscription.unsubscribe(); };
   }, []);
 
+  // Remove splash screen quando o auth estiver pronto
+  useEffect(() => {
+    if (!authLoading && (window as any).__removeSplash) {
+      (window as any).__removeSplash();
+    }
+  }, [authLoading]);
+
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
+    return null; // Splash screen do index.html está visível
   }
 
   return (
