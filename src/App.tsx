@@ -3086,15 +3086,8 @@ export default function App() {
     return () => { clearTimeout(timeout); subscription.unsubscribe(); };
   }, []);
 
-  // Remove splash screen quando o auth estiver pronto
-  useEffect(() => {
-    if (!authLoading && (window as any).__removeSplash) {
-      (window as any).__removeSplash();
-    }
-  }, [authLoading]);
-
   if (authLoading) {
-    return null; // Splash screen do index.html está visível
+    return null;
   }
 
   return (
