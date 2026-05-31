@@ -1119,7 +1119,7 @@ const BannerGrid = ({ banners }: { banners: import('./types').Banner[] }) => {
         key={first.id}
         onClick={() => { if (first.link) window.open(first.link, '_blank', 'noreferrer'); }}
         className={cn("w-full relative overflow-hidden rounded-[20px]", first.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : '')}
-        style={{ aspectRatio: '8/9' }}
+        style={{ aspectRatio: '4/5' }}
       >
         <img src={first.photoUrl} alt="banner 1" className="w-full h-full object-cover" />
       </div>
