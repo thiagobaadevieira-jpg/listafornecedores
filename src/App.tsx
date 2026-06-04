@@ -1128,16 +1128,13 @@ const BannerGrid = ({ banners }: { banners: import('./types').Banner[] }) => {
       {rest.length > 0 && (
         <div className="w-full grid grid-cols-2 gap-3">
           {rest.map((b, i) => (
-            <motion.div
+            <div
               key={b.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
               onClick={() => { if (b.link) window.open(b.link, '_blank', 'noreferrer'); }}
               className={cn("relative aspect-square overflow-hidden rounded-[16px]", b.link ? 'cursor-pointer active:scale-[0.97] transition-transform' : '')}
             >
               <img src={b.photoUrl} alt={`banner ${i + 2}`} className="w-full h-full object-cover" />
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
