@@ -379,19 +379,15 @@ export async function toggleClientStatus(id: string): Promise<void> {
 }
 
 export async function toggleDemoAccess(id: string): Promise<boolean> {
-  // Lê estado atual
-  const { data, error: readError } = await supabase
-    .from('clients').select('is_demo').eq('id', id).single();
-  if (readError || !data) throw readError ?? new Error('Cliente não encontrado');
-  const newValue = !data.is_demo;
-  // Atualiza e exige confirmação da escrita
-  const { data: updated, error } = await supabase
-    .from('clients').update({ is_demo: newValue }).eq('id', id).select('is_demo').single();
+  // Inverte direto no banco com is_demo = NOT is_demo (operação atômica)
+  // e retorna o novo valor confirmado pelo Postgres
+  const { data, error } = await supabase
+    .rpc('toggle_client_demo', { p_id: id });
   if (error) throw error;
-  if (!updated || updated.is_demo !== newValue) {
-    throw new Error('Atualização não foi salva (verifique permissões).');
+  if (data === null || data === undefined) {
+    throw new Error('Cliente não encontrado ou sem permissão.');
   }
-  return newValue;
+  return data as boolean;
 }
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
