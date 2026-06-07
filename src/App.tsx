@@ -2092,6 +2092,20 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   };
 
   useEffect(() => { loadData(); }, [user.id]);
+
+  // Sempre que o app abrir/recarregar, verifica se o status demo do cliente mudou
+  // (admin pode ter liberado/revogado acesso enquanto estava deslogado)
+  useEffect(() => {
+    if (user.role !== 'client' || !user.email) return;
+    db.getClientByEmail(user.email).then(client => {
+      if (!client) return;
+      const realIsDemo = client.isDemo ?? false;
+      if (realIsDemo !== (user.isDemo ?? false)) {
+        onProfileUpdate({ ...user, isDemo: realIsDemo });
+      }
+    }).catch(() => {});
+  }, [user.id]);
+
   useEffect(() => {
     db.getSystemLogoUrl().then(url => {
       setSystemLogoUrl(url);
