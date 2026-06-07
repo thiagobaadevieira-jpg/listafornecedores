@@ -215,7 +215,7 @@ const ClientsModal = ({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'demo'>('demo');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'demo'>('demo');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Client | null>(null);
@@ -224,7 +224,6 @@ const ClientsModal = ({
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
-  const [formActive, setFormActive] = useState(true);
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
@@ -244,7 +243,6 @@ const ClientsModal = ({
     setFormName('');
     setFormEmail('');
     setFormPhone('');
-    setFormActive(true);
     setFormError('');
     setIsFormOpen(true);
   };
@@ -254,7 +252,6 @@ const ClientsModal = ({
     setFormName(c.name);
     setFormEmail(c.email);
     setFormPhone(formatPhone(c.phone));
-    setFormActive(c.active);
     setFormError('');
     setIsFormOpen(true);
   };
@@ -265,9 +262,9 @@ const ClientsModal = ({
     setFormLoading(true);
     try {
       if (editingClient) {
-        await db.updateClient(editingClient.id, { name: formName.trim(), email: formEmail.trim(), phone: formPhone.trim(), active: formActive });
+        await db.updateClient(editingClient.id, { name: formName.trim(), email: formEmail.trim(), phone: formPhone.trim() });
       } else {
-        await db.createClient({ name: formName.trim(), email: formEmail.trim(), phone: formPhone.trim(), active: formActive });
+        await db.createClient({ name: formName.trim(), email: formEmail.trim(), phone: formPhone.trim(), active: true });
       }
       setIsFormOpen(false);
       await loadClients();
@@ -295,15 +292,13 @@ const ClientsModal = ({
   const filtered = clients.filter(c => {
     const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search);
     const matchStatus = statusFilter === 'all'
-      || (statusFilter === 'active' && c.active && !c.isDemo)
-      || (statusFilter === 'inactive' && !c.active)
-      || (statusFilter === 'demo' && c.isDemo && c.active);
+      || (statusFilter === 'active' && !c.isDemo)
+      || (statusFilter === 'demo' && c.isDemo);
     return matchSearch && matchStatus;
   });
 
-  const activeCount = clients.filter(c => c.active && !c.isDemo).length;
-  const inactiveCount = clients.filter(c => !c.active).length;
-  const demoCount = clients.filter(c => c.isDemo && c.active).length;
+  const activeCount = clients.filter(c => !c.isDemo).length;
+  const demoCount = clients.filter(c => c.isDemo).length;
 
   if (!isOpen) return null;
 
@@ -334,7 +329,7 @@ const ClientsModal = ({
 
           {/* Stats / Filtro */}
           <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 ml-1">Selecione o filtro clicando no card abaixo</p>
-          <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="grid grid-cols-2 gap-3 mb-5">
             <button
               onClick={() => setStatusFilter(f => f === 'active' ? 'all' : 'active')}
               className={`glass rounded-2xl p-4 flex items-center gap-3 transition-all ${statusFilter === 'active' ? 'border border-green-500/50 shadow-[0_0_10px_rgba(74,222,128,0.15)]' : 'border border-transparent'}`}
@@ -345,18 +340,6 @@ const ClientsModal = ({
               <div className="text-left">
                 <p className="text-lg font-black text-green-400">{activeCount}</p>
                 <p className="text-[10px] text-white/40 font-medium">Ativos</p>
-              </div>
-            </button>
-            <button
-              onClick={() => setStatusFilter(f => f === 'inactive' ? 'all' : 'inactive')}
-              className={`glass rounded-2xl p-4 flex items-center gap-3 transition-all ${statusFilter === 'inactive' ? 'border border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.15)]' : 'border border-transparent'}`}
-            >
-              <div className="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center">
-                <UserX className="w-4 h-4 text-red-400" />
-              </div>
-              <div className="text-left">
-                <p className="text-lg font-black text-red-400">{inactiveCount}</p>
-                <p className="text-[10px] text-white/40 font-medium">Inativos</p>
               </div>
             </button>
             <button
@@ -514,18 +497,6 @@ const ClientsModal = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between glass rounded-2xl px-4 py-3">
-                <div>
-                  <p className="text-sm font-bold text-white">Pausar acesso</p>
-                  <p className="text-xs text-white/40">{formActive ? 'Cliente ativo' : 'Cliente pausado'}</p>
-                </div>
-                <button
-                  onClick={() => setFormActive(v => !v)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${!formActive ? 'bg-red-500' : 'bg-white/10'}`}
-                >
-                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${!formActive ? 'left-7' : 'left-1'}`} />
-                </button>
-              </div>
 
               {formError && (
                 <p className="text-red-400 text-xs font-medium flex items-center gap-1.5">
