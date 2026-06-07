@@ -290,7 +290,12 @@ const ClientsModal = ({
   };
 
   const filtered = clients.filter(c => {
-    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search);
+    const phoneDigitsClient = c.phone.replace(/\D/g, '');
+    const phoneDigitsSearch = search.replace(/\D/g, '');
+    const matchSearch = !search
+      || c.name.toLowerCase().includes(search.toLowerCase())
+      || c.email.toLowerCase().includes(search.toLowerCase())
+      || (phoneDigitsSearch.length > 0 && phoneDigitsClient.includes(phoneDigitsSearch));
     const matchStatus = statusFilter === 'all'
       || (statusFilter === 'active' && !c.isDemo)
       || (statusFilter === 'demo' && c.isDemo);
