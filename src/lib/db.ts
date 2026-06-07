@@ -378,10 +378,20 @@ export async function toggleClientStatus(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function toggleDemoAccess(id: string): Promise<void> {
-  const { data } = await supabase.from('clients').select('is_demo').eq('id', id).single();
-  const { error } = await supabase.from('clients').update({ is_demo: !data?.is_demo }).eq('id', id);
+export async function toggleDemoAccess(id: string): Promise<boolean> {
+  // Lê estado atual
+  const { data, error: readError } = await supabase
+    .from('clients').select('is_demo').eq('id', id).single();
+  if (readError || !data) throw readError ?? new Error('Cliente não encontrado');
+  const newValue = !data.is_demo;
+  // Atualiza e exige confirmação da escrita
+  const { data: updated, error } = await supabase
+    .from('clients').update({ is_demo: newValue }).eq('id', id).select('is_demo').single();
   if (error) throw error;
+  if (!updated || updated.is_demo !== newValue) {
+    throw new Error('Atualização não foi salva (verifique permissões).');
+  }
+  return newValue;
 }
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────

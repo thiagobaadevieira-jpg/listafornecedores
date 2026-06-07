@@ -279,8 +279,21 @@ const ClientsModal = ({
   };
 
   const handleGrantAccess = async (id: string) => {
+    // Salva estado anterior para rollback
+    const prevClient = clients.find(c => c.id === id);
+    const prevIsDemo = prevClient?.isDemo ?? false;
+    // Atualização otimista
     setClients(prev => prev.map(c => c.id === id ? { ...c, isDemo: !c.isDemo } : c));
-    await db.toggleDemoAccess(id);
+    try {
+      const newValue = await db.toggleDemoAccess(id);
+      // Sincroniza com o valor confirmado pelo banco
+      setClients(prev => prev.map(c => c.id === id ? { ...c, isDemo: newValue } : c));
+    } catch (err) {
+      console.error('Erro ao alterar acesso:', err);
+      // Rollback visual
+      setClients(prev => prev.map(c => c.id === id ? { ...c, isDemo: prevIsDemo } : c));
+      alert('Erro ao alterar acesso. Tente novamente.');
+    }
   };
 
   const handleDelete = async (id: string) => {
