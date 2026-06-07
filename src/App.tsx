@@ -516,14 +516,14 @@ const ClientsModal = ({
 
               <div className="flex items-center justify-between glass rounded-2xl px-4 py-3">
                 <div>
-                  <p className="text-sm font-bold text-white">Status</p>
-                  <p className="text-xs text-white/40">{formActive ? 'Cliente com acesso ativo' : 'Cliente sem acesso'}</p>
+                  <p className="text-sm font-bold text-white">Pausar acesso</p>
+                  <p className="text-xs text-white/40">{formActive ? 'Cliente ativo' : 'Cliente pausado'}</p>
                 </div>
                 <button
                   onClick={() => setFormActive(v => !v)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${formActive ? 'bg-green-500' : 'bg-white/10'}`}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${!formActive ? 'bg-red-500' : 'bg-white/10'}`}
                 >
-                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${formActive ? 'left-7' : 'left-1'}`} />
+                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${!formActive ? 'left-7' : 'left-1'}`} />
                 </button>
               </div>
 
