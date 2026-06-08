@@ -219,6 +219,7 @@ const ClientsModal = ({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Client | null>(null);
+  const [confirmToggle, setConfirmToggle] = useState<Client | null>(null);
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -479,7 +480,7 @@ const ClientsModal = ({
 
                     {/* Cadeado demo */}
                     <button
-                      onClick={e => { e.stopPropagation(); handleGrantAccess(c.id); }}
+                      onClick={e => { e.stopPropagation(); setConfirmToggle(c); }}
                       title={c.isDemo ? 'Acesso demo — clique para liberar acesso completo' : 'Acesso completo — clique para voltar ao demo'}
                       className={`self-stretch flex items-center justify-center w-14 rounded-xl transition-colors flex-shrink-0 ${
                         c.isDemo
@@ -601,6 +602,42 @@ const ClientsModal = ({
                 className="flex-1 h-11 rounded-2xl font-bold text-sm text-white bg-red-500 hover:bg-red-600 transition-colors"
               >
                 Excluir
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Confirm Toggle (Liberar/Bloquear acesso) */}
+      {confirmToggle && (
+        <>
+          <div className="fixed inset-0 bg-black/70 z-[110]" onClick={() => setConfirmToggle(null)} />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[111] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl text-center">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${confirmToggle.isDemo ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+              {confirmToggle.isDemo
+                ? <LockOpen className="w-6 h-6 text-green-400" />
+                : <Lock className="w-6 h-6 text-red-400" />}
+            </div>
+            <h3 className="font-black text-lg mb-2">
+              {confirmToggle.isDemo ? 'Liberar acesso?' : 'Bloquear acesso?'}
+            </h3>
+            <p className="text-sm text-white/50 mb-6">
+              {confirmToggle.isDemo
+                ? <>O cliente <span className="text-white font-bold">{confirmToggle.name}</span> terá acesso completo a todos os fornecedores.</>
+                : <>O cliente <span className="text-white font-bold">{confirmToggle.name}</span> voltará para a conta demo (acesso limitado).</>}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmToggle(null)}
+                className="flex-1 h-11 rounded-2xl font-bold text-sm text-white/60 glass hover:bg-white/5 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { const c = confirmToggle; setConfirmToggle(null); handleGrantAccess(c.id); }}
+                className={`flex-1 h-11 rounded-2xl font-bold text-sm text-white transition-colors ${confirmToggle.isDemo ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+              >
+                {confirmToggle.isDemo ? 'Liberar' : 'Bloquear'}
               </button>
             </div>
           </div>
