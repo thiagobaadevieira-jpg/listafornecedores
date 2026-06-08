@@ -228,8 +228,41 @@ const ClientsModal = ({
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
-    if (isOpen) loadClients();
+    if (isOpen) {
+      loadClients();
+      // Restaura rascunho de novo cliente se existir (resistente a reload do PWA no celular)
+      try {
+        const draft = localStorage.getItem('brasconect_new_client_draft');
+        if (draft) {
+          const d = JSON.parse(draft);
+          setFormName(d.name ?? '');
+          setFormEmail(d.email ?? '');
+          setFormPhone(d.phone ?? '');
+          setEditingClient(null);
+          setIsFormOpen(true);
+        }
+      } catch {}
+    }
   }, [isOpen]);
+
+  // Salva rascunho a cada mudança nos campos (somente quando criando novo cliente)
+  useEffect(() => {
+    if (!isFormOpen || editingClient) return;
+    try {
+      localStorage.setItem('brasconect_new_client_draft', JSON.stringify({
+        name: formName, email: formEmail, phone: formPhone,
+      }));
+    } catch {}
+  }, [formName, formEmail, formPhone, isFormOpen, editingClient]);
+
+  const clearDraft = () => {
+    try { localStorage.removeItem('brasconect_new_client_draft'); } catch {}
+  };
+
+  const handleCloseForm = () => {
+    if (!editingClient) clearDraft();
+    setIsFormOpen(false);
+  };
 
   const loadClients = async () => {
     setLoading(true);
@@ -266,6 +299,7 @@ const ClientsModal = ({
       } else {
         await db.createClient({ name: formName.trim(), email: formEmail.trim(), phone: formPhone.trim(), active: true });
       }
+      clearDraft();
       setIsFormOpen(false);
       await loadClients();
     } finally {
@@ -473,11 +507,11 @@ const ClientsModal = ({
       {/* Form Modal (New/Edit) */}
       {isFormOpen && (
         <>
-          <div className="fixed inset-0 bg-black/70 z-[110]" onClick={() => setIsFormOpen(false)} />
+          <div className="fixed inset-0 bg-black/70 z-[110]" onClick={handleCloseForm} />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[111] max-w-md mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-black">{editingClient ? 'Editar Cliente' : 'Novo Cliente'}</h3>
-              <button onClick={() => setIsFormOpen(false)} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+              <button onClick={handleCloseForm} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
                 <X className="w-5 h-5 text-red-400" />
               </button>
             </div>
