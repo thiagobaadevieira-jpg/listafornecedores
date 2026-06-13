@@ -9,6 +9,7 @@ export interface Supplier {
   note?: string;
   isFavorite?: boolean;
   demoAccess?: boolean;
+  isUnlocked?: boolean;
   isNew?: boolean;
   createdAt: string;
 }

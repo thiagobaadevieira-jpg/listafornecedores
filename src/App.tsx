@@ -2807,7 +2807,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                   return (<>
                   {readySuppliers.map((supplier) => {
                     const GOLD = '#c9a55a';
-                    const isLocked = isDemo && !supplier.demoAccess;
+                    const isLocked = isDemo && !supplier.isUnlocked;
                   return (
                       <div key={supplier.id}
                         onClick={async () => {

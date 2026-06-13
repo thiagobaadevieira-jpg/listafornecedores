@@ -124,6 +124,7 @@ export async function getSuppliersWithFavorites(userId: string): Promise<Supplie
     instagram: row.instagram,
     photoUrl: row.photo_url,
     demoAccess: row.demo_access ?? false,
+    isUnlocked: row.is_unlocked ?? true,
     isNew: row.is_new ?? false,
     isFavorite: row.is_favorite ?? false,
     categories: row.categories ?? [row.category],
