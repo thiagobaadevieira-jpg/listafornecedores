@@ -72,7 +72,8 @@ const CategorySettingsModal = ({
   onAdd,
   onDelete,
   onEdit,
-  onToggleDemo
+  onToggleDemo,
+  onUploadPhoto
 }: {
   isOpen: boolean,
   onClose: () => void,
@@ -80,13 +81,38 @@ const CategorySettingsModal = ({
   onAdd: (name: string) => void,
   onDelete: (name: string) => void,
   onEdit: (oldName: string, newName: string) => void,
-  onToggleDemo: (catId: string, newValue: boolean) => void
+  onToggleDemo: (catId: string, newValue: boolean) => void,
+  onUploadPhoto: (catId: string, file: File) => Promise<void>
 }) => {
   const [newCatName, setNewCatName] = useState("");
   const [editingCatName, setEditingCatName] = useState<string | null>(null);
   const [tempEditName, setTempEditName] = useState("");
   const [catToDelete, setCatToDelete] = useState<string | null>(null);
   const [catToToggle, setCatToToggle] = useState<Category | null>(null);
+  const [uploadingCatId, setUploadingCatId] = useState<string | null>(null);
+  const catFileRef = useRef<HTMLInputElement>(null);
+  const catFileTargetId = useRef<string | null>(null);
+
+  const handlePickPhoto = (catId: string) => {
+    catFileTargetId.current = catId;
+    catFileRef.current?.click();
+  };
+
+  const handleCatFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const catId = catFileTargetId.current;
+    if (!file || !catId) return;
+    if (file.size > 8 * 1024 * 1024) { alert('Imagem muito grande. Máximo 8 MB.'); return; }
+    setUploadingCatId(catId);
+    try {
+      await onUploadPhoto(catId, file);
+    } catch {
+      alert('Erro ao enviar a foto. Tente novamente.');
+    } finally {
+      setUploadingCatId(null);
+      if (catFileRef.current) catFileRef.current.value = '';
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -128,6 +154,8 @@ const CategorySettingsModal = ({
               </button>
             </div>
 
+            <input ref={catFileRef} type="file" accept="image/*,image/avif,.avif" className="hidden" onChange={handleCatFileChange} />
+
             <div className="space-y-3 mb-8 max-h-[350px] overflow-y-auto pr-2 scrollbar-none">
               {categories.map((cat, idx) => (
                 <div key={idx} className="group relative">
@@ -136,9 +164,24 @@ const CategorySettingsModal = ({
                     editingCatName === cat.name && "border-blue-500/30 bg-blue-500/5 shadow-lg shadow-blue-500/10"
                   )}>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      
+                      {/* Miniatura / upload de foto */}
+                      <button
+                        type="button"
+                        onClick={() => handlePickPhoto(cat.id)}
+                        title="Enviar/trocar foto da categoria"
+                        className="relative w-10 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-[#1b1f2e] flex items-center justify-center"
+                      >
+                        {uploadingCatId === cat.id ? (
+                          <div className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                        ) : cat.photo_url ? (
+                          <img src={cat.photo_url} alt={cat.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Camera className="w-4 h-4 text-white/25" />
+                        )}
+                      </button>
+
                       {editingCatName === cat.name ? (
-                        <input 
+                        <input
                           autoFocus
                           value={tempEditName}
                           onChange={(e) => setTempEditName(e.target.value)}
@@ -2375,6 +2418,12 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     setCategories(prev => prev.filter(c => c.name !== name));
   };
 
+  const handleUploadCategoryPhoto = async (catId: string, file: File) => {
+    const url = await db.uploadCategoryPhoto(file);
+    await db.updateCategory(catId, { photo_url: url });
+    setCategories(prev => prev.map(c => c.id === catId ? { ...c, photo_url: url } : c));
+  };
+
   const handleToggleCategoryDemo = async (catId: string, newValue: boolean) => {
     // Atualização otimista
     setCategories(prev => prev.map(c => c.id === catId ? { ...c, demo_access: newValue } : c));
@@ -2719,51 +2768,63 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="overflow-y-auto overscroll-contain max-h-[60vh] p-2">
+                      <div className="overflow-y-auto overscroll-contain max-h-[70vh] p-3">
                         <button
                           type="button"
                           onClick={() => { setSelectedCategoryFilter('all'); setIsCategoryFilterOpen(false); }}
-                          className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all ${selectedCategoryFilter === 'all' ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
+                          className={`w-full px-4 py-3 mb-3 rounded-xl text-sm font-bold text-center transition-all ${selectedCategoryFilter === 'all' ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80 border border-white/10'}`}
                         >
                           Todas as categorias
                         </button>
-                        {(isDemo ? [...categories].sort((a, b) => (b.demo_access ? 1 : 0) - (a.demo_access ? 1 : 0)) : categories).map(c => {
-                          // Demo só pode filtrar categorias liberadas
-                          const demoLocked = isDemo && !c.demo_access;
-                          return (
-                          <button
-                            key={c.name}
-                            type="button"
-                            onClick={() => {
-                              if (demoLocked) return;
-                              setSelectedCategoryFilter(c.name);
-                              setIsCategoryFilterOpen(false);
-                            }}
-                            className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all flex items-center gap-3 ${
-                              demoLocked
-                                ? 'text-white/30 cursor-default'
-                                : selectedCategoryFilter === c.name
-                                  ? 'bg-white/10 text-white'
-                                  : 'text-white/50 hover:bg-white/5 hover:text-white/80'
-                            }`}
-                          >
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#c9a55a' }} />
-                            <span className="flex-1">{c.name}</span>
-                            {demoLocked && (
-                              <svg className="w-3.5 h-3.5 text-white/20 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                              </svg>
-                            )}
-                            {isDemo && c.demo_access && (
-                              <span className="flex items-center gap-1 shrink-0">
-                                <Check className="w-3.5 h-3.5 text-green-400" />
-                                <span className="text-[10px] font-bold text-green-400/70">Liberado</span>
-                              </span>
-                            )}
-                          </button>
-                          );
-                        })}
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {(isDemo ? [...categories].sort((a, b) => (b.demo_access ? 1 : 0) - (a.demo_access ? 1 : 0)) : categories).map(c => {
+                            const demoLocked = isDemo && !c.demo_access;
+                            const selected = selectedCategoryFilter === c.name;
+                            return (
+                              <button
+                                key={c.name}
+                                type="button"
+                                onClick={() => {
+                                  if (demoLocked) return;
+                                  setSelectedCategoryFilter(c.name);
+                                  setIsCategoryFilterOpen(false);
+                                }}
+                                className={`relative rounded-2xl overflow-hidden transition-all ${demoLocked ? 'cursor-default' : 'active:scale-[0.97]'} ${selected ? 'ring-2 ring-[#c9a55a]' : ''}`}
+                                style={{ aspectRatio: '4/5' }}
+                              >
+                                {/* Foto ou fallback escuro */}
+                                {c.photo_url ? (
+                                  <img src={c.photo_url} alt={c.name} className="absolute inset-0 w-full h-full object-cover" />
+                                ) : (
+                                  <div className="absolute inset-0 bg-[#1b1f2e]" />
+                                )}
+
+                                {/* Gradiente + nome */}
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent pt-6 pb-2 px-2">
+                                  <span className="text-xs font-bold text-white block text-center leading-tight">{c.name}</span>
+                                </div>
+
+                                {/* Selo liberado (demo) */}
+                                {isDemo && c.demo_access && (
+                                  <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-green-500/90 rounded-lg px-1.5 py-0.5">
+                                    <Check className="w-3 h-3 text-white" />
+                                    <span className="text-[9px] font-black text-white uppercase">Liberado</span>
+                                  </span>
+                                )}
+
+                                {/* Fumê + cadeado (demo bloqueada) */}
+                                {demoLocked && (
+                                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                    <svg className="w-7 h-7 text-white/80" style={{ filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.6))' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                    </svg>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </>
@@ -3218,6 +3279,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         onDelete={handleDeleteCategory}
         onEdit={handleEditCategory}
         onToggleDemo={handleToggleCategoryDemo}
+        onUploadPhoto={handleUploadCategoryPhoto}
       />
       <ProfileModal
         isOpen={isProfileOpen}

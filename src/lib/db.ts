@@ -3,7 +3,7 @@ import type { Supplier, Banner, Client } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type Category = { id: string; name: string; color: string; initials: string; demo_access?: boolean };
+export type Category = { id: string; name: string; color: string; initials: string; demo_access?: boolean; photo_url?: string | null };
 
 export type Profile = {
   id: string;
@@ -85,6 +85,19 @@ export async function deleteCategory(id: string): Promise<void> {
     .delete()
     .eq('id', id);
   if (error) throw error;
+}
+
+export async function uploadCategoryPhoto(file: File): Promise<string> {
+  // Supabase não suporta AVIF — converte para WebP antes de enviar
+  const uploadFile = file.type === 'image/avif' ? await convertToWebP(file) : file;
+  const ext = uploadFile.name.split('.').pop()?.toLowerCase() ?? 'webp';
+  const path = `${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('categories')
+    .upload(path, uploadFile, { upsert: true, contentType: uploadFile.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from('categories').getPublicUrl(path);
+  return data.publicUrl;
 }
 
 // ─── Suppliers ────────────────────────────────────────────────────────────────
