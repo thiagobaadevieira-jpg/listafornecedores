@@ -3,7 +3,7 @@ import type { Supplier, Banner, Client } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type Category = { id: string; name: string; color: string; initials: string };
+export type Category = { id: string; name: string; color: string; initials: string; demo_access?: boolean };
 
 export type Profile = {
   id: string;

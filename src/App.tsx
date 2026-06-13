@@ -71,19 +71,22 @@ const CategorySettingsModal = ({
   categories,
   onAdd,
   onDelete,
-  onEdit
+  onEdit,
+  onToggleDemo
 }: {
   isOpen: boolean,
   onClose: () => void,
   categories: Category[],
   onAdd: (name: string) => void,
   onDelete: (name: string) => void,
-  onEdit: (oldName: string, newName: string) => void
+  onEdit: (oldName: string, newName: string) => void,
+  onToggleDemo: (catId: string, newValue: boolean) => void
 }) => {
   const [newCatName, setNewCatName] = useState("");
   const [editingCatName, setEditingCatName] = useState<string | null>(null);
   const [tempEditName, setTempEditName] = useState("");
   const [catToDelete, setCatToDelete] = useState<string | null>(null);
+  const [catToToggle, setCatToToggle] = useState<Category | null>(null);
 
   if (!isOpen) return null;
 
@@ -149,13 +152,24 @@ const CategorySettingsModal = ({
                     </div>
                     
                     <div className="flex items-center gap-1">
-                      <button 
+                      {/* Toggle liberar para demo */}
+                      <button
+                        onClick={() => setCatToToggle(cat)}
+                        title={cat.demo_access ? 'Liberado para demo — clique para bloquear' : 'Bloqueado — clique para liberar ao demo'}
+                        className="flex items-center gap-1.5 mr-1"
+                      >
+                        <span className={`text-[8px] font-black uppercase tracking-wider ${cat.demo_access ? 'text-green-400' : 'text-white/20'}`}>Demo</span>
+                        <div className={`relative w-8 h-4 rounded-full transition-colors ${cat.demo_access ? 'bg-green-500' : 'bg-white/15'}`}>
+                          <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all ${cat.demo_access ? 'left-4' : 'left-0.5'}`} />
+                        </div>
+                      </button>
+                      <button
                         onClick={() => handleStartEdit(cat.name)}
                         className="p-2 text-white/20 hover:text-blue-400 transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => setCatToDelete(cat.name)}
                         className="p-2 text-white/20 hover:text-red-400 transition-colors"
                       >
@@ -187,7 +201,7 @@ const CategorySettingsModal = ({
             </div>
           </div>
 
-          <ConfirmationModal 
+          <ConfirmationModal
             isOpen={!!catToDelete}
             onClose={() => setCatToDelete(null)}
             onConfirm={() => {
@@ -197,6 +211,42 @@ const CategorySettingsModal = ({
             title="Excluir Categoria?"
             message={`Tem certeza que deseja remover a categoria "${catToDelete}"? Todos os gastos vinculados a ela permanecerão, mas a categoria será removida do painel.`}
           />
+
+          {/* Confirmar liberar/bloquear categoria para demo */}
+          {catToToggle && (
+            <>
+              <div className="fixed inset-0 bg-black/70 z-[210]" onClick={() => setCatToToggle(null)} />
+              <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 z-[211] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl p-6 shadow-2xl text-center">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${catToToggle.demo_access ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
+                  {catToToggle.demo_access
+                    ? <Lock className="w-6 h-6 text-red-400" />
+                    : <LockOpen className="w-6 h-6 text-green-400" />}
+                </div>
+                <h3 className="font-black text-lg mb-2">
+                  {catToToggle.demo_access ? 'Bloquear categoria para demo?' : 'Liberar categoria para demo?'}
+                </h3>
+                <p className="text-sm text-white/50 mb-6">
+                  {catToToggle.demo_access
+                    ? <>Os clientes demo voltarão a ver os fornecedores de <span className="text-white font-bold">{catToToggle.name}</span> bloqueados.</>
+                    : <>Os clientes demo verão <span className="text-white font-bold">todos os fornecedores</span> da categoria <span className="text-white font-bold">{catToToggle.name}</span>.</>}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setCatToToggle(null)}
+                    className="flex-1 h-11 rounded-2xl font-bold text-sm text-white/60 glass hover:bg-white/5 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => { const c = catToToggle; setCatToToggle(null); onToggleDemo(c.id, !c.demo_access); }}
+                    className={`flex-1 h-11 rounded-2xl font-bold text-sm text-white transition-colors ${catToToggle.demo_access ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                  >
+                    {catToToggle.demo_access ? 'Bloquear' : 'Liberar'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </AnimatePresence>
@@ -2325,6 +2375,21 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     setCategories(prev => prev.filter(c => c.name !== name));
   };
 
+  const handleToggleCategoryDemo = async (catId: string, newValue: boolean) => {
+    // Atualização otimista
+    setCategories(prev => prev.map(c => c.id === catId ? { ...c, demo_access: newValue } : c));
+    try {
+      await db.updateCategory(catId, { demo_access: newValue });
+      // Recarrega fornecedores para refletir o novo desbloqueio na lista
+      setSuppliers(await db.getSuppliersWithFavorites(user.id));
+    } catch (err) {
+      console.error('Erro ao alterar categoria demo:', err);
+      // Rollback
+      setCategories(prev => prev.map(c => c.id === catId ? { ...c, demo_access: !newValue } : c));
+      alert('Erro ao alterar a categoria. Tente novamente.');
+    }
+  };
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -2656,17 +2721,20 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         >
                           Todas as categorias
                         </button>
-                        {categories.map(c => (
+                        {categories.map(c => {
+                          // Demo só pode filtrar categorias liberadas
+                          const demoLocked = isDemo && !c.demo_access;
+                          return (
                           <button
                             key={c.name}
                             type="button"
                             onClick={() => {
-                              if (isDemo) return;
+                              if (demoLocked) return;
                               setSelectedCategoryFilter(c.name);
                               setIsCategoryFilterOpen(false);
                             }}
                             className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all flex items-center gap-3 ${
-                              isDemo
+                              demoLocked
                                 ? 'text-white/30 cursor-default'
                                 : selectedCategoryFilter === c.name
                                   ? 'bg-white/10 text-white'
@@ -2675,14 +2743,21 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                           >
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#c9a55a' }} />
                             <span className="flex-1">{c.name}</span>
-                            {isDemo && (
+                            {demoLocked && (
                               <svg className="w-3.5 h-3.5 text-white/20 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                               </svg>
                             )}
+                            {isDemo && c.demo_access && (
+                              <span className="flex items-center gap-1 shrink-0">
+                                <Check className="w-3.5 h-3.5 text-green-400" />
+                                <span className="text-[10px] font-bold text-green-400/70">Liberado</span>
+                              </span>
+                            )}
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </>
@@ -3136,6 +3211,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
         onAdd={handleAddCategory}
         onDelete={handleDeleteCategory}
         onEdit={handleEditCategory}
+        onToggleDemo={handleToggleCategoryDemo}
       />
       <ProfileModal
         isOpen={isProfileOpen}
