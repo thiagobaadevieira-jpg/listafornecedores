@@ -2769,13 +2769,6 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         </button>
                       </div>
                       <div className="overflow-y-auto overscroll-contain max-h-[70vh] p-3">
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedCategoryFilter('all'); setIsCategoryFilterOpen(false); }}
-                          className={`w-full px-4 py-3 mb-3 rounded-xl text-sm font-bold text-center transition-all ${selectedCategoryFilter === 'all' ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80 border border-white/10'}`}
-                        >
-                          Todas as categorias
-                        </button>
                         <div className="grid grid-cols-2 gap-2.5">
                           {(isDemo ? [...categories].sort((a, b) => (b.demo_access ? 1 : 0) - (a.demo_access ? 1 : 0)) : categories).map(c => {
                             const demoLocked = isDemo && !c.demo_access;
