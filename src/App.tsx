@@ -2449,9 +2449,15 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       const matchSearch = !searchQuery || s.name.toLowerCase().includes(q) || s.instagram?.toLowerCase().includes(q) || codeStr.includes(q);
       return matchCat && matchSearch;
     });
-    // Admin e conta grátis: liberados primeiro, bloqueados depois
+    // Desbloqueados primeiro, depois novidade, depois por número
     if (isAdmin || isDemo) {
-      list.sort((a, b) => (b.demoAccess ? 1 : 0) - (a.demoAccess ? 1 : 0));
+      list.sort((a, b) => {
+        const ua = a.isUnlocked ? 1 : 0, ub = b.isUnlocked ? 1 : 0;
+        if (ub !== ua) return ub - ua;
+        const na = a.isNew ? 1 : 0, nb = b.isNew ? 1 : 0;
+        if (nb !== na) return nb - na;
+        return a.code - b.code;
+      });
     }
     return list;
   }, [suppliers, view, selectedCategoryFilter, searchQuery, isDemo]);
@@ -2721,7 +2727,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         >
                           Todas as categorias
                         </button>
-                        {categories.map(c => {
+                        {(isDemo ? [...categories].sort((a, b) => (b.demo_access ? 1 : 0) - (a.demo_access ? 1 : 0)) : categories).map(c => {
                           // Demo só pode filtrar categorias liberadas
                           const demoLocked = isDemo && !c.demo_access;
                           return (
