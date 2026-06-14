@@ -2407,8 +2407,15 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     const cat = categories.find(c => c.name === oldName);
     if (!cat?.id) return;
     const updatedInitials = newName.substring(0, 2).toUpperCase();
-    await db.updateCategory(cat.id, { name: newName, initials: updatedInitials });
+    // Renomeia a categoria E atualiza os fornecedores que a referenciam (atômico no banco)
+    await db.renameCategory(cat.id, newName);
     setCategories(prev => prev.map(c => c.name === oldName ? { ...c, name: newName, initials: updatedInitials } : c));
+    // Atualiza os fornecedores em memória para refletir o novo nome sem recarregar
+    setSuppliers(prev => prev.map(s => ({
+      ...s,
+      categories: (s.categories ?? []).map(n => n === oldName ? newName : n),
+      category: s.category === oldName ? newName : s.category,
+    })));
   };
 
   const handleDeleteCategory = async (name: string) => {

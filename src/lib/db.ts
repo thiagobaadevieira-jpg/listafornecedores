@@ -87,6 +87,12 @@ export async function deleteCategory(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// Renomeia a categoria E atualiza todos os fornecedores que a referenciam (atômico, admin-only)
+export async function renameCategory(id: string, newName: string): Promise<void> {
+  const { error } = await supabase.rpc('rename_category', { p_id: id, p_new_name: newName });
+  if (error) throw error;
+}
+
 export async function uploadCategoryPhoto(file: File): Promise<string> {
   // Supabase não suporta AVIF — converte para WebP antes de enviar
   const uploadFile = file.type === 'image/avif' ? await convertToWebP(file) : file;
