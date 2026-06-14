@@ -2773,8 +2773,8 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                     <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[151] max-w-sm mx-auto bg-[#161929] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
                       <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
                         <p className="text-sm font-black uppercase tracking-widest text-white/50">Categoria</p>
-                        <button onClick={() => setIsCategoryFilterOpen(false)} className="p-1.5 rounded-xl hover:bg-white/5 text-white/30">
-                          <X className="w-4 h-4" />
+                        <button onClick={() => setIsCategoryFilterOpen(false)} className="w-10 h-10 rounded-2xl bg-red-500/15 hover:bg-red-500/25 flex items-center justify-center transition-colors">
+                          <X className="w-5 h-5 text-red-400" />
                         </button>
                       </div>
                       <div className="overflow-y-auto overscroll-contain max-h-[70vh] p-3">
