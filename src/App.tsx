@@ -2803,7 +2803,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
 
                                 {/* Gradiente + nome */}
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent pt-6 pb-2 px-2">
-                                  <span className="text-xs font-bold text-white block text-center leading-tight">{c.name}</span>
+                                  <span className="text-sm font-bold text-white block text-center leading-tight">{c.name}</span>
                                 </div>
 
                                 {/* Selo liberado (demo) */}
