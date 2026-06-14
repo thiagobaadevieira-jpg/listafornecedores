@@ -2524,6 +2524,15 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
     });
   }, [visibleSuppliers]);
 
+  // Pré-carrega as fotos das categorias em segundo plano (popup abre instantâneo)
+  useEffect(() => {
+    categories.forEach(c => {
+      if (!c.photo_url) return;
+      const img = new Image();
+      img.src = c.photo_url;
+    });
+  }, [categories]);
+
   // ─── Early returns AFTER all hooks ───────────────────────────────────────────
   if (dataLoading) {
     return (
