@@ -2755,7 +2755,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
 
               {/* Grade de categorias (landing da aba Fornecedores) */}
               {view === 'list' && selectedCategoryFilter === 'all' && !searchQuery ? (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   {(isDemo ? [...categories].sort((a, b) => (b.demo_access ? 1 : 0) - (a.demo_access ? 1 : 0)) : categories).map(c => {
                     const demoLocked = isDemo && !c.demo_access;
                     return (
@@ -2774,18 +2774,18 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                         ) : (
                           <div className="absolute inset-0 bg-[#1b1f2e]" />
                         )}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent pt-5 pb-1.5 px-1.5">
-                          <span className="text-[11px] font-bold text-white block text-center leading-tight">{c.name}</span>
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent pt-6 pb-2 px-2">
+                          <span className="text-sm font-bold text-white block text-center leading-tight">{c.name}</span>
                         </div>
                         {isDemo && c.demo_access && (
-                          <span className="absolute top-1 left-1 flex items-center gap-0.5 bg-green-500/90 rounded-md px-1 py-0.5">
-                            <Check className="w-2.5 h-2.5 text-white" />
-                            <span className="text-[7px] font-black text-white uppercase">Liberado</span>
+                          <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-green-500/90 rounded-lg px-1.5 py-0.5">
+                            <Check className="w-3 h-3 text-white" />
+                            <span className="text-[9px] font-black text-white uppercase">Liberado</span>
                           </span>
                         )}
                         {demoLocked && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-white/80" style={{ filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.6))' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <svg className="w-7 h-7 text-white/80" style={{ filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.6))' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                             </svg>
