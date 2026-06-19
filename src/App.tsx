@@ -2802,10 +2802,13 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
                 <button
                   type="button"
                   onClick={() => { setSelectedCategoryFilter('all'); setSearchQuery(''); }}
-                  className="flex items-center gap-2 text-sm font-bold text-white/60 hover:text-white transition-colors mb-1"
+                  className="w-full h-12 glass rounded-2xl px-4 flex items-center gap-2 text-sm font-bold text-white border border-white/10 hover:bg-white/5 active:scale-[0.98] transition-all mb-1"
                 >
-                  <ChevronRight className="w-4 h-4 rotate-180" />
-                  Categorias{selectedCategoryFilter !== 'all' ? ` · ${selectedCategoryFilter}` : ''}
+                  <ChevronRight className="w-5 h-5 rotate-180 shrink-0" style={{ color: '#c9a55a' }} />
+                  <span>Voltar para categorias</span>
+                  {selectedCategoryFilter !== 'all' && (
+                    <span className="ml-auto text-xs font-medium text-white/40 truncate max-w-[40%]">{selectedCategoryFilter}</span>
+                  )}
                 </button>
               )}
 
