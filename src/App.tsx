@@ -1260,17 +1260,24 @@ const LoginScreen = () => {
 
 // ─── Banner Carousel ──────────────────────────────────────────────────────────
 
-const BannerGrid = ({ banners }: { banners: import('./types').Banner[] }) => {
+const isCalcLink = (link?: string) => typeof link === 'string' && link.trim().toLowerCase() === 'calculadora';
+
+const BannerGrid = ({ banners, onOpenCalculator }: { banners: import('./types').Banner[]; onOpenCalculator: () => void }) => {
   if (banners.length === 0) return null;
 
   const [first, ...rest] = banners;
+
+  const handleBannerClick = (link?: string) => {
+    if (isCalcLink(link)) { onOpenCalculator(); return; }
+    if (link) window.open(link, '_blank', 'noreferrer');
+  };
 
   return (
     <div className="w-full flex flex-col gap-3 overflow-hidden">
       {/* Primeiro banner — largura total 16:9 */}
       <div
         key={first.id}
-        onClick={() => { if (first.link) window.open(first.link, '_blank', 'noreferrer'); }}
+        onClick={() => handleBannerClick(first.link)}
         className={cn("w-full relative overflow-hidden rounded-[20px]", first.link ? 'cursor-pointer active:scale-[0.98] transition-transform' : '')}
         style={{ aspectRatio: '4/5' }}
       >
@@ -1283,7 +1290,7 @@ const BannerGrid = ({ banners }: { banners: import('./types').Banner[] }) => {
           {rest.map((b, i) => (
             <div
               key={b.id}
-              onClick={() => { if (b.link) window.open(b.link, '_blank', 'noreferrer'); }}
+              onClick={() => handleBannerClick(b.link)}
               className={cn("relative aspect-square overflow-hidden rounded-[16px]", b.link ? 'cursor-pointer active:scale-[0.97] transition-transform' : '')}
             >
               <img src={b.photoUrl} alt={`banner ${i + 2}`} className="w-full h-full object-cover" />
@@ -2228,6 +2235,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
   const [lockedPopupOpen, setLockedPopupOpen] = useState(false);
+  const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [upgradeUrl, setUpgradeUrlState] = useState('');
 
   const loadData = () => {
@@ -2720,7 +2728,7 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
           {view === 'overview' ? (
             <div className="space-y-6"
             >
-              <BannerGrid banners={banners} />
+              <BannerGrid banners={banners} onOpenCalculator={() => setIsCalcOpen(true)} />
             </div>
           ) : (
             <div className="space-y-6"
@@ -3214,6 +3222,26 @@ const DashboardScreen = ({ user, onLogout, onProfileUpdate }: { user: User, onLo
       )}
 
       {/* Popup fornecedor bloqueado (conta grátis) */}
+      {/* Popup da calculadora (banner com link "calculadora") */}
+      {isCalcOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200]" onClick={() => setIsCalcOpen(false)} />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[201] max-w-md mx-auto h-[88vh] bg-[#0e0f1a] rounded-3xl shadow-2xl">
+            <button
+              onClick={() => setIsCalcOpen(false)}
+              className="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-red-500/90 hover:bg-red-500 flex items-center justify-center transition-colors z-[202] shadow-lg"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <iframe
+              src="/calculadora.html"
+              title="Calculadora de precificação"
+              className="w-full h-full rounded-3xl border-0"
+            />
+          </div>
+        </>
+      )}
+
       {lockedPopupOpen && (
         <>
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200]" onClick={() => setLockedPopupOpen(false)} />

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dados da Compra — Calculadora</title>
+<style>
+  :root{
+    --bg:#0e0f1a;
+    --card:#161722;
+    --card-border:#39322a;
+    --input-bg:#1b1c28;
+    --input-border:#39352f;
+    --input-focus:#d8a973;
+    --label:#cdd0d8;
+    --value:#a9adba;
+    --helper:#c39a6a;
+    --accent:#d8a973;
+    --result-bg:#1c1922;
+    --cost:#ef847b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--label);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:100%;
+    max-width:420px;
+    background:var(--card);
+    border:1.5px solid var(--card-border);
+    border-radius:20px;
+    padding:22px 20px 26px;
+    box-shadow:0 0 30px rgba(216,169,115,.07);
+  }
+  .header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:19px;
+    font-weight:700;
+    color:#f2f4f8;
+  }
+  .header .icon{font-size:20px;}
+  .subtitle{
+    color:var(--accent);
+    font-size:13px;
+    margin:6px 0 22px;
+    line-height:1.35;
+  }
+  .section-title{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:var(--helper);
+    margin:4px 0 12px;
+    font-weight:600;
+  }
+  .row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .row.full{grid-template-columns:1fr;}
+  .field{display:flex;flex-direction:column;}
+  label{
+    font-size:13px;
+    color:var(--label);
+    margin-bottom:7px;
+  }
+  .input-wrap{
+    position:relative;
+    display:flex;
+    align-items:center;
+  }
+  .prefix,.suffix{
+    position:absolute;
+    color:var(--value);
+    font-size:14px;
+    pointer-events:none;
+  }
+  .prefix{left:14px;}
+  .suffix{right:14px;}
+  input{
+    width:100%;
+    background:var(--input-bg);
+    border:1.5px solid var(--input-border);
+    border-radius:12px;
+    padding:13px 14px;
+    color:#e6e9ef;
+    font-size:15px;
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input.has-prefix{padding-left:38px;}
+  input.has-suffix{padding-right:34px;}
+  input::placeholder{color:#6b7280;}
+  input:focus{
+    border-color:var(--input-focus);
+    box-shadow:0 0 0 3px rgba(216,169,115,.18);
+  }
+  .frete-result{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--result-bg);
+    border:1.5px solid var(--card-border);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:22px;
+  }
+  .frete-result .k{font-size:13px;color:var(--label);}
+  .frete-result .v{font-size:17px;font-weight:700;color:var(--accent);}
+  .divider{
+    height:1px;
+    background:rgba(255,255,255,.06);
+    margin:4px 0 20px;
+  }
+  .result{
+    margin-top:24px;
+    background:var(--result-bg);
+    border:1.5px solid var(--card-border);
+    border-radius:16px;
+    padding:18px 16px;
+  }
+  .result h2{
+    font-size:14px;
+    color:var(--accent);
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .result-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,.05);
+    font-size:14px;
+  }
+  .result-line:last-child{border-bottom:none;}
+  .result-line .k{color:var(--value);}
+  .result-line .k small{
+    display:block;
+    font-size:11px;
+    color:var(--helper);
+    margin-top:2px;
+  }
+  .result-line .v{color:#e6e9ef;font-weight:600;}
+  .result-line .v.cost{color:var(--cost);}
+  .result-line.highlight .k{color:#f2f4f8;}
+  .result-line.highlight .v{color:var(--accent);font-size:18px;font-weight:700;}
+  .result-line.subtotal .k{color:#f2f4f8;}
+  .result-line.subtotal .v{color:var(--cost);font-size:18px;font-weight:700;}
+  .result-line.highlight .v.negativo,
+  .result-line .v.negativo{color:var(--cost);}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="header"><span class="icon">📦</span> Dados da Compra</div>
+    <p class="subtitle">Preencha os campos e veja o resultado em tempo real</p>
+
+    <div class="section-title">Frete</div>
+    <div class="row">
+      <div class="field">
+        <label for="qtd">Quantidade de peças</label>
+        <div class="input-wrap">
+          <input type="number" id="qtd" value="" placeholder="0" step="1" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label for="frete">Frete total (R$)</label>
+        <div class="input-wrap">
+          <span class="prefix">R$</span>
+          <input class="has-prefix" type="number" id="frete" value="" placeholder="0,00" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+    </div>
+    <div class="frete-result">
+      <span class="k">Custo de frete por peça</span>
+      <span class="v" id="r-frete-peca">R$ 0,00</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">Custos</div>
+    <div class="row">
+      <div class="field">
+        <label for="extras">Gastos extras (R$)</label>
+        <div class="input-wrap">
+          <span class="prefix">R$</span>
+          <input class="has-prefix" type="number" id="extras" value="" placeholder="0,00" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label for="maquininha">Taxa de maquininha (%)</label>
+        <div class="input-wrap">
+          <input class="has-suffix" type="number" id="maquininha" value="" placeholder="0" step="0.1" inputmode="decimal">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+    </div>
+    <div class="row full">
+      <div class="field">
+        <label for="taxa">Imposto (%)</label>
+        <div class="input-wrap">
+          <input class="has-suffix" type="number" id="taxa" value="" placeholder="0" step="0.1" inputmode="decimal">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Venda</div>
+    <div class="row">
+      <div class="field">
+        <label for="valorPeca">Valor da peça (R$)</label>
+        <div class="input-wrap">
+          <span class="prefix">R$</span>
+          <input class="has-prefix" type="number" id="valorPeca" value="" placeholder="0,00" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label for="margem">Margem (% sobre a peça)</label>
+        <div class="input-wrap">
+          <input class="has-suffix" type="number" id="margem" value="" placeholder="0" step="1" inputmode="decimal">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="result">
+      <h2>💰 Resultado</h2>
+      <div class="result-line">
+        <span class="k">Valor da peça</span>
+        <span class="v cost" id="r-valor-peca">R$ 0,00</span>
+      </div>
+      <div class="result-line">
+        <span class="k">Custo de frete por peça</span>
+        <span class="v cost" id="r-frete-peca-res">R$ 0,00</span>
+      </div>
+      <div class="result-line">
+        <span class="k">Gastos extras</span>
+        <span class="v cost" id="r-extras">R$ 0,00</span>
+      </div>
+      <div class="result-line">
+        <span class="k">Taxa de maquininha<small>calculado sobre o total da venda</small></span>
+        <span class="v cost" id="r-maquininha">R$ 0,00</span>
+      </div>
+      <div class="result-line">
+        <span class="k">Imposto<small>calculado sobre o total da venda</small></span>
+        <span class="v cost" id="r-taxa">R$ 0,00</span>
+      </div>
+      <div class="result-line highlight">
+        <span class="k">Preço de venda sugerido</span>
+        <span class="v" id="r-preco">R$ 0,00</span>
+      </div>
+      <div class="result-line subtotal">
+        <span class="k">Custos totais</span>
+        <span class="v" id="r-custos-totais">R$ 0,00</span>
+      </div>
+      <div class="result-line highlight">
+        <span class="k">Lucro real<small>venda − todos os custos</small></span>
+        <span class="v" id="r-lucro-real">R$ 0,00</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const fmt = (n) => "R$ " + (isFinite(n) ? n : 0).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtNeg = (n) => "- " + fmt(n);
+  const num = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+  function calcular(){
+    const qtd      = num("qtd") || 1;
+    const frete    = num("frete");
+    const extras   = num("extras");
+    const valorPeca= num("valorPeca");
+    const margem   = num("margem") / 100;
+    const taxa     = num("taxa") / 100;
+    const maquina  = num("maquininha") / 100;
+
+    const fretePeca = frete / qtd;
+    document.getElementById("r-frete-peca").textContent = fmt(fretePeca);
+
+    const custoTotal = valorPeca + fretePeca + extras;
+    const preco = valorPeca * (1 + margem);
+    const valorTaxa = preco * taxa;
+    const valorMaq  = preco * maquina;
+    const custosTotais = custoTotal + valorMaq + valorTaxa;
+    const lucroReal = preco - custosTotais;
+
+    document.getElementById("r-valor-peca").textContent     = fmtNeg(valorPeca);
+    document.getElementById("r-frete-peca-res").textContent = fmtNeg(fretePeca);
+    document.getElementById("r-extras").textContent         = fmtNeg(extras);
+    document.getElementById("r-maquininha").textContent     = fmtNeg(valorMaq);
+    document.getElementById("r-taxa").textContent           = fmtNeg(valorTaxa);
+    document.getElementById("r-preco").textContent          = fmt(preco);
+    document.getElementById("r-custos-totais").textContent  = fmtNeg(custosTotais);
+    document.getElementById("r-lucro-real").textContent     = fmt(lucroReal);
+
+    const lucroEl = document.getElementById("r-lucro-real");
+    lucroEl.classList.toggle("negativo", lucroReal < 0);
+  }
+
+  document.querySelectorAll("input").forEach(el => el.addEventListener("input", calcular));
+  calcular();
+</script>
+</body>
+</html>
